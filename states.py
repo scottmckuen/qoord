@@ -10,7 +10,7 @@ import numpy as np  # best if we don't need this!
 from functools import partial
 from typing import TypeAlias, TypeVar, Union
 
-from .__support__ import MatrixArray, VectorArray, ndim_zero_ket, update_index, is_square
+from .__support__ import Numeric, MatrixArray, VectorArray, ndim_zero_ket, update_index, is_square
 
 # TmpMO exists because "Self" isn't available until Python 3.11
 TmpSV = TypeVar("TmpSV", bound="StateVector")
@@ -32,7 +32,7 @@ def _copy_array(a):
 class StateVector(object):
 
     @classmethod
-    def normalize(cls, array):
+    def _normalize(cls, array):
         # need to make sure array norms to 1
         norm = math.sqrt(sum([x * x for x in array]))
         if norm != 1:
@@ -56,7 +56,7 @@ class StateVector(object):
         if array is None:  # does type hinting help prevent this?
             raise ValueError("Cannot make StateVector with no array input.")
 
-        _array = self.normalize(array)
+        _array = self._normalize(array)
         self._array = _array
 
     """def update(self, new_array: InternalArray):
@@ -81,6 +81,16 @@ class StateVector(object):
 
     def __len__(self):
         return len(self._array)
+
+    def __mul__(self, other):
+        vector = self.to_numpy_array()
+        vector = vector * other
+        return StateVector(array=vector)
+
+    def __truediv__(self, other):
+        vector = self.to_numpy_array()
+        vector = vector / other
+        return StateVector(array=vector)
 
     def qubit_count(self):
         return int(math.log(len(self), 2))
@@ -214,9 +224,16 @@ class MatrixOperator(object):
         return np.allclose(np.eye(len(m)), m.dot(m.T.conj()))
 
     def dim(self):
+        """
+        The size of the operator as a square array
+        @return:
+        """
         return self._array.shape[0]
 
-    def eig(self):
+    def qubit_count(self):
+        return int(math.log(self.dim(), 2))
+
+    def eig(self) -> tuple[list[Numeric], list[VectorArray]]:
         """
         Get the eigenvalue, eigenvector structure of the operator.
         Improves on np.linalg.eig by returning eigenvectors as
@@ -416,7 +433,10 @@ class QuantumState(object):
             v = new_op @ v
             self.set_value(v)
 
-    def measure(self, observable: MatrixOperator, on_qubits: list):
+    def measure(self, observable: MatrixOperator, on_qubits: list | None = None):
+        if on_qubits is None and \
+                observable.qubit_count() == self.qubit_count():
+            on_qubits = self.qubit_ids
 
         with self._align_to_end(observable, on_qubits) as ctxt:
             # Perform the measurement
@@ -426,7 +446,8 @@ class QuantumState(object):
 
             # update the global quantum state to account for the measurement
             # and do this in-context because the shuffle needs to be applied
-            projector = MatrixOperator(np.outer(vector, vector))
+            dm = vector.to_density_matrix()
+            projector = MatrixOperator(dm.to_array())
             updated_state = (projector @ state) / math.sqrt(prob)
 
             self.set_value(updated_state)
@@ -435,11 +456,13 @@ class QuantumState(object):
             inv_perm = invert_permutation(perm)
             vector = vector.rearrange(inv_perm)
 
-
         # reduce the measurement result to the user-visible qubits
-        vector = vector.partial_trace(on_qubits)
+        if not set(on_qubits) == set(self.qubit_ids):
+            vector = vector.partial_trace(on_qubits)
         values, vectors = observable.eig()
-        vidx = vectors.index(vector)
+        for vidx, v in enumerate(vectors):
+            if all(v == vector):
+                break
         result = values[vidx]
 
         return result

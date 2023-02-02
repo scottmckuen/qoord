@@ -175,7 +175,7 @@ def test_tensor_sv():
 
     sv3 = sv1.tensor(sv2)
     actual = sv3.to_array()
-    expected = StateVector.normalize([3, 4, 6, 8])
+    expected = StateVector._normalize([3, 4, 6, 8])
 
     assert close_enough(actual, expected)
 
@@ -246,14 +246,22 @@ def test_new_state():
     Hadamard:  measure once, confirm that the state updates 
     to correspond to the eigenstate of the eigenvalue
     """
-    observable = pauli_z
     init_state = StateVector([1 / 2, 1 / 2])
-    actual = observable.measure(init_state)
+    quantum_state = QuantumState(qubit_ids=[0])
+    quantum_state.set_value(init_state)
+
+    observable = pauli_z
+    actual = quantum_state.measure(observable, on_qubits=[0])
 
     vals, states = observable.eig()
-    expected_state = states[vals.tolist().index(actual)]
+    if actual == 1:
+        expected_state = [1, 0]
+    elif actual == -1:
+        expected_state = [0, 1]
 
-    assert init_state.to_array() == expected_state.tolist()
+    actual_state = states[vals.tolist().index(actual)]
+    actual_state = actual_state.tolist()
+    assert actual_state == expected_state
 
 
 def test_simple_statistics():
@@ -295,13 +303,15 @@ def test_second_measurement_consistency():
     test_value = ev[0]
     good_samples = 0
     good_seconds = 0
+    init_state = StateVector([1 / 2, 1 / 2])
     for n in range(1000):
-        init_state = StateVector([1 / 2, 1 / 2])
-        v = pauli_z.measure(init_state, update_state=True)
+        quantum_state = QuantumState(qubit_ids=[0])
+        quantum_state.set_value(init_state)
+        v = quantum_state.measure(pauli_z)
         if v != test_value:
             continue
         good_samples += 1
-        v2 = pauli_z.measure(init_state, update_state=True)
+        v2 = quantum_state.measure(pauli_z)
         if v2 == test_value:
             good_seconds += 1
     assert good_seconds == good_samples  # 100% the same, nothing rotated
