@@ -41,29 +41,22 @@ def close_enough(array1, array2, rel_tol=1e-15):
 
 
 def int_to_binary_list(x: int, size: int) -> list[chr]:
-    x_list = [_ for _ in bin(x)][2:]
-    if len(x_list) < size:
-        excess = size - len(x_list)
-        # prepend zeros
-        x_list = excess * ['0'] + x_list
-    return x_list
+    return list(f"{x:0{size}b}")
 
 
 def binary_list_to_int(x: list[chr]) -> int:
-    if 'b' in x:
-        bstr = ''.join(x[2:])
-    else:
-        bstr = ''.join(x)
-    return int(bstr, base=2)
+    return int(''.join(x), base=2)
 
 
 def update_index(x: int, permutation: map, size: int) -> int:
     x = int_to_binary_list(x, size)
     new_x = deepcopy(x)
     for old_idx, new_idx in permutation.items():
+        # Instead of breaking here, do you actually want to assert or raise?
         if old_idx >= len(x):
             break
         new_x[new_idx] = x[old_idx]
+
     new_x = binary_list_to_int(new_x)
     return new_x
 
