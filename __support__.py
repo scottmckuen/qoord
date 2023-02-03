@@ -75,14 +75,9 @@ def ndim_zero_ket(n_qubits: int) -> list[int]:
 
 
 def is_square(array):
-    nrows = len(array)
-    ncols = []
     for row in array:
-        ncols.append(len(row))
-    ncols = set(ncols)
-    if len(ncols) > 1:
-        return False
-    ncols = ncols.pop()
-    return ncols == nrows
-
+        if len(row) != len(array):
+            return False
+    
+    return len(array) > 0
 
