@@ -16,8 +16,6 @@ DO NOT import any other part of qoord into this module.
 """
 
 Numeric: TypeAlias = SupportsFloat | complex
-VectorArray: TypeAlias = list[Numeric]
-MatrixArray: TypeAlias = list[VectorArray]
 
 
 def eipn(n: int) -> complex:
@@ -74,3 +72,11 @@ def is_square(array):
     
     return len(array) > 0
 
+
+def _copy_array(a):
+    new_a = deepcopy(a)
+    try:
+        new_a = new_a.tolist()
+    except:
+        pass
+    return new_a

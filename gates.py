@@ -1,6 +1,5 @@
-from qoord.__support__ import MatrixArray
-from qoord.states import MatrixOperator
-from qoord.qubits import Qubit, QubitSet
+from .states import MatrixArray, MatrixOperator
+from .qubits import Qubit, QubitSet
 
 
 class UnitaryGate:

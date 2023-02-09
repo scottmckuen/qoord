@@ -2,14 +2,13 @@ import math
 
 import numpy as np
 
-from qoord.__support__ import close_enough
-from qoord import permute_to_end, update_index
-from qoord.states import StateVector, DensityMatrix, MatrixOperator, QuantumState
-from qoord.core_operators import identity_op, hadamard_op, cnot_op, pauli_z, pauli_x, phase_op
-from qoord.gates import UnitaryGate
-from qoord.core_gates import Hadamard, CNOT, PauliX
-from qoord.qubits import Qubit
-from qoord.devices import Device
+from .__support__ import close_enough, update_index
+from .states import StateVector, DensityMatrix, MatrixOperator, QuantumState, permute_to_end
+from .core_operators import identity_op, hadamard_op, cnot_op, pauli_z, pauli_x, phase_op
+from .gates import UnitaryGate
+from .core_gates import Hadamard, CNOT, PauliX
+from .qubits import Qubit
+from .devices import Device
 
 
 def test_support_binary():
@@ -358,11 +357,18 @@ def test_power_of_operator():
 
 
 def test_2qubit_gate_on_bigger_state():
+    # set up a 5-qubit state - every qubit defaults to |0>
     device = Device(qubits=5)
+    # select a 2-qubit subsystem (#3 and #1)
     q1, q3 = device.get_qubits(keys=[1, 3])
-    PauliX(q3)  # set q3 to 1 to control the CNOT
-    CNOT(q3, q1)  # this should flip q1 from 0 to 1
+    # initialize q3 to |1> to control the CNOT (X-gate is a classical NOT gate)
+    PauliX(q3)
+    # this should flip q1 from |0> to |1> because q3 = |1>
+    CNOT(q3, q1)
+
+    # this returns the eigenvalue
     actual = q3.measure(pauli_z)
+    # map the measured value to |0> or |1>
     expected = 1
 
     assert actual == expected
@@ -380,7 +386,9 @@ def test_bell_state_coerce_density_matrix():
                                     [0, 0, 0, 0],
                                     [0.5, 0, 0, 0.5]])
 
-    assert close_enough(state.to_numpy_array().flat, expected_state.to_numpy_array().flat)
+    actual_state_array = state.to_array(as_numpy=True)
+    expected_state_array = expected_state.to_array(as_numpy=True)
+    assert close_enough(actual_state_array, expected_state_array)
 
 
 def test_bell_state_partial_trace():
@@ -391,11 +399,14 @@ def test_bell_state_partial_trace():
     state = qubit.get_state(force_density_matrix=True)
 
     #  this is the thing we partial trace on:  trace out Bob / qubit1
-    alice_state = state.trace_out(keep_qubits=[0])
+    alice_state = state.partial_trace(keep_qubits=[0])
 
     ket0 = StateVector([1, 0])
     ket1 = StateVector([0, 1])
 
-    expected = (np.outer(ket0, ket0) + np.outer(ket1, ket1))/2
+    expected = (ket0.to_density_matrix() + ket1.to_density_matrix())
+    expected = expected.scale(0.5)
 
-    assert close_enough(alice_state.to_numpy_array().flat, expected.to_numpy_array().flat)
+    alice = alice_state.to_numpy_array()
+    expected = expected.to_numpy_array()
+    assert close_enough(alice._flat, expected._flat)

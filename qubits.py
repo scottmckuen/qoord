@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from .states import MatrixOperator, QuantumState
+from .states import StateVector, MatrixOperator, QuantumState
 
 
 class Qubit(object):
@@ -25,6 +25,11 @@ class Qubit(object):
         self._quantum_state = state
         self._state_index = label
 
+    ZERO = StateVector([1, 0])  # the zero ket |0> gives the 0 bit-value
+    ONE = StateVector([0, 1])  # the one ket |0> gives the 1 bit-value
+    _eigenvalue_to_eigenvector = {1: ZERO, -1: ONE}
+    _eigenvector_to_bit = {ZERO: 0, ONE: 1}
+
     def get_state(self, force_density_matrix=False):
         inner_state = self._quantum_state.get_value(force_density_matrix)
         return deepcopy(inner_state)
@@ -34,11 +39,14 @@ class Qubit(object):
         state.apply(operator, [self._state_index])
 
     def measure(self, observable:  MatrixOperator):
-        result = self._quantum_state.measure(observable, self._state_index)
-        return result
+        eigenvalue = self._quantum_state.measure(observable, self._state_index)
+        eigenvector = self._eigenvalue_to_eigenvector[eigenvalue]
+        bit_value = self._eigenvector_to_bit[eigenvector]
+        return bit_value
 
 
 class QubitSet(object):
+
     def __init__(self, qubits: list[Qubit]):
         q1 = qubits[0]
         self._global_state = q1._quantum_state

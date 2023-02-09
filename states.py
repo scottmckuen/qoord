@@ -1,32 +1,43 @@
-import cmath
 import contextlib
-import copy
 import math
 import random
 import typing
 
-import numpy as np  # best if we don't need this!
+import numpy as np
 
-from functools import partial
+from numbers import Number
 from typing import TypeAlias, TypeVar, Union
 
-from .__support__ import Numeric, MatrixArray, VectorArray, ndim_zero_ket, update_index, is_square
+from .__support__ import Numeric, ndim_zero_ket, update_index, is_square, _copy_array
 
-# TmpMO exists because "Self" isn't available until Python 3.11
+# row and column vectors are both supported
+RowVector: TypeAlias = tuple[Numeric]
+ColumnVector: TypeAlias = tuple[tuple[Numeric]]
+VectorArray: TypeAlias = tuple[Numeric] | tuple[tuple[Numeric]]
+MatrixArray: TypeAlias = tuple[RowVector]
+
+# TmpMO exists because "Self"-typing isn't available until Python 3.11
 TmpSV = TypeVar("TmpSV", bound="StateVector")
 TmpMO = TypeVar("TmpMO", bound="MatrixOperator")
 TmpDM = TypeVar("TmpDM", bound="DensityMatrix")
 
-InternalArray: TypeAlias = Union[VectorArray, np.array]
+
+# data like [1, 2, 3]
+def _flat(data):
+    return all([isinstance(x, Number) for x in data])
 
 
-def _copy_array(a):
-    new_a = copy.deepcopy(a)
-    try:
-        new_a = new_a.tolist()
-    except:
-        pass
-    return new_a
+# data like [[1, 2, 3]]
+def _np_row(data):
+    one_row = len(data) == 1
+    tuple_or_list = isinstance(data[0], tuple) or isinstance(data[0], list)
+    numeric = all([isinstance(x, Number) for x in data[0]])
+    return one_row and tuple_or_list and numeric
+
+
+# data like [[1], [2], [3]]
+def _np_column(data):
+    return all([len(x) == 1 and isinstance(x[0], Number) for x in data])
 
 
 class StateVector(object):
@@ -40,122 +51,117 @@ class StateVector(object):
         else:
             normed_array = array
 
-        return normed_array
+        return tuple(normed_array)
 
-    def __init__(self, array: VectorArray):
+    def __init__(self, array: VectorArray, as_ket=True):
         """
-        Contract:  self._array is always a (nested?) list,
-        and we only use np.arrays to assist with calculations
-        or as a return value when that's clearly expected
-        from the API.
+        Contract:  self._array is always a list,
+        and we only use numpy arrays internally to assist
+        with calculations or as a return value when that's
+        clearly expected from the API.
 
-        The StateVector is shareable, but the input array
-        shouldn't be.  It is a numeric array, so we don't
-        need to deepcopy.
+        The StateVector is immutable and shareable, but the
+        input array shouldn't be.  It is a numeric array, so
+        we don't need to deepcopy.
+
+        @param array:  the elements of the vector, as tuple or list
+        @param as_ket:  flag for column (ket) vector or row (bra) vector; default True
         """
         if array is None:  # does type hinting help prevent this?
             raise ValueError("Cannot make StateVector with no array input.")
 
-        _array = self._normalize(array)
-        self._array = _array
+        if not isinstance(array, list) and not isinstance(array, tuple):
+            raise ValueError("Only support list and tuple as input.")
 
-    """def update(self, new_array: InternalArray):
-        if isinstance(new_array, np.ndarray):
-            new_array = new_array.tolist()
-        self._array = [x for x in new_array]"""
+        if _flat(array):
+            self._array = self._normalize(array)
+            self._as_ket = as_ket
+        else:
+            vtype, array = self._vector_type(array)
+            self._as_ket = vtype == 'column'
+            self._array = self._normalize(array)
+
+
+    @classmethod
+    def _vector_type(cls, data):
+        # assume the data is already a list or tuple
+        if _flat(data):
+            vtype = 'row'
+            flat_data = data
+        elif _np_row(data):
+            vtype = 'row'
+            flat_data = data[0]
+        elif _np_column(data):
+            vtype = 'column'
+            flat_data = [x[0] for x in data]
+        else:
+            raise ValueError("Data is the wrong shape!")
+
+        return vtype, flat_data
 
     def to_array(self):
-        return self._array
+        return [x for x in self._array]
 
     def to_numpy_array(self):
-        return np.array(self.to_array())
+        if self._as_ket:
+            vtype = 'c'  # kets are column vectors
+        else:
+            vtype = 'r'  # bras are row vectors
+        return np.r_[vtype, self._array].A
+
 
     def __repr__(self):
         return str(self._array)  # we just care about the contents
 
     def __eq__(self, other: TmpSV):
         if not isinstance(other, StateVector):
-            # what about some other representation of state?  Later....
             return False
         return np.array_equal(self._array, other._array)
+
+    def __hash__(self):
+        return hash(self._array)
 
     def __len__(self):
         return len(self._array)
 
-    def __mul__(self, other):
+    def scale(self, scale_factor):
         vector = self.to_numpy_array()
-        vector = vector * other
-        return StateVector(array=vector)
-
-    def __truediv__(self, other):
-        vector = self.to_numpy_array()
-        vector = vector / other
-        return StateVector(array=vector)
+        vector = [v*scale_factor for v in vector]
+        return StateVector(vector)
 
     def qubit_count(self):
         return int(math.log(len(self), 2))
 
-    def tensor(self, other: TmpSV):
+    def tensor(self, other: TmpSV) -> TmpSV:
         array_out = np.tensordot(self._array, other._array, axes=0)
         array_out = array_out.reshape([array_out.size, ])
         array_out = [x for x in array_out]
-        return StateVector(array=array_out)
+        result = StateVector(array_out)
+        return result
 
-    def dot(self, other: TmpSV):
-        oparts = other._array
-        self_parts = self._array
-        parts = zip(self_parts, oparts)
+    def outer(self, other: TmpSV) -> TmpMO:
+        content = np.outer(self.to_numpy_array(), other.to_numpy_array())
+        return MatrixOperator(content)
+
+    def adjoint(self):
+        new_array = self.to_numpy_array().conj().T
+        return StateVector(new_array.tolist())
+
+    def dot(self, other: TmpSV) -> Numeric:
+        other_parts = other.to_array()
+        self_parts = self.to_array()
+        parts = zip(self_parts, other_parts)
         parts = [x * y for x, y in parts]
         result = sum(parts)
         return result
 
     def to_density_matrix(self) -> TmpDM:
-        content = np.outer(self.to_array(), self.to_array())
-        return DensityMatrix(content)
+        content = self.outer(self)
+        return DensityMatrix(content.to_array())
 
     def rearrange(self, tensor_permutation):
         new_inner = rearrange_vector(tensor_permutation, self._array)
         return StateVector(new_inner)
-
-
-class DensityMatrix(object):
-    def __init__(self, array: MatrixArray | VectorArray):
-        """
-        Contract:  self._array is always a (nested?) list,
-        and we only use np.arrays to assist with calculations
-        or as a return value when that's clearly expected
-        from the API.
-        """
-        array = _copy_array(array)
-        if isinstance(array[0], list):
-            assert is_square(array)
-            self._array = array
-        else:  # hopefully scalar
-            self._array = np.outer(array, array).tolist()
-
-    def update(self, new_array: MatrixArray | VectorArray | StateVector):
-
-        assert new_array.shape == self._array.shape
-        self._array = _copy_array(new_array)
-
-    def to_array(self):
-        return self._array
-
-    def to_numpy_array(self):
-        return np.array(self._array)
-
-    def __repr__(self):
-        return str(self._array)
-
-    def __eq__(self, other: TmpDM):
-        return np.array_equal(self._array, other._array)
-
-    def tensor(self, other: TmpDM):
-        array_out = np.kron(self._array, other._array)
-        return DensityMatrix(array=array_out)
-
-    def trace_out(self, keep_qubits: list) -> TmpDM:
-        pass
 
 
 class MatrixOperator(object):
@@ -190,16 +196,18 @@ class MatrixOperator(object):
         return np.array_equal(self_array, other_array)
 
     def __matmul__(self, other: TmpMO | StateVector):
-        if isinstance(other, MatrixOperator):
-            new_array = self._array @ other._array
+        if isinstance(other, MatrixOperator) or isinstance(other, DensityMatrix):
+            self_array = self.to_array(as_numpy=True)
+            other_array = other.to_array(as_numpy=True)
+            new_array = self_array @ other_array
             return MatrixOperator(components=new_array)
         else:  # StateVector
             return self.apply_to_vector(other)
 
     def apply_to_vector(self, vector: StateVector):
         vector_array = vector.to_numpy_array()
-        new_vector = self._array @ vector_array
-        return StateVector(array = new_vector)
+        new_vector = self.to_array(as_numpy=True) @ vector_array
+        return StateVector(array=new_vector.tolist())
 
     def __pow__(self, exponent):
         def cpower(a, b):
@@ -212,6 +220,16 @@ class MatrixOperator(object):
     def tensor(self, other: TmpMO):
         array_out = np.kron(self._array, other._array)
         return MatrixOperator(components=array_out)
+
+    def tensor_power(self, num: int) -> TmpMO:
+        result = self
+        for _ in range(num - 1):
+            result = result.tensor(self)
+        return result
+
+    def adjoint(self):
+        new_array = self.to_array(as_numpy=True).conj().T
+        return MatrixOperator(new_array)
 
     def to_array(self, as_numpy=False):
         if as_numpy:
@@ -229,6 +247,9 @@ class MatrixOperator(object):
         @return:
         """
         return self._array.shape[0]
+
+    def shape(self):
+        return self._array.shape
 
     def qubit_count(self):
         return int(math.log(self.dim(), 2))
@@ -267,13 +288,13 @@ class MatrixOperator(object):
         idx = values.index(eigenvalue)
         return vectors[idx]
 
-    def distribution(self, state: StateVector | DensityMatrix):
+    def distribution(self, state: StateVector | TmpMO):
         eigenvalues, eigenstates = self.eig()
-        eigenstates = [StateVector(s) for s in eigenstates]
+        eigenstates = [StateVector(s.tolist()) for s in eigenstates]
         coefficients = [state.dot(s) for s in eigenstates]
         return eigenvalues, eigenstates, coefficients
 
-    def measure(self, state: StateVector | DensityMatrix, extra_data=False) \
+    def measure(self, state: StateVector | TmpMO, extra_data=False) \
             -> float | tuple[float, TmpSV, float]:
         eigenvalues, eigenstates, coefficients = self.distribution(state)
         probabilities = [c*c for c in coefficients]
@@ -323,12 +344,81 @@ identity_op = MatrixOperator([[1, 0],
                               [0, 1]])
 
 
+class DensityMatrix(MatrixOperator):
+    def __init__(self, array: MatrixArray | VectorArray):
+        """
+        Contract:  self._array is always a (nested?) list,
+        and we only use np.arrays to assist with calculations
+        or as a return value when that's clearly expected
+        from the API.
+        """
+        if isinstance(array, typing.Sequence) and \
+                not isinstance(array[0], typing.Sequence):
+            # this is a vector input, so we want to cast it to a square array
+            array = np.outer(array, array).tolist()
+        super().__init__(array)
+
+    def __eq__(self, other: TmpDM):
+        return np.array_equal(self._array, other._array)
+
+    def __add__(self, other: TmpDM):
+        content = self.to_numpy_array() + other.to_numpy_array()
+        return DensityMatrix(content)
+
+    def scale(self, scale_factor):
+        content = self.to_numpy_array() * scale_factor
+        return DensityMatrix(content)
+
+    def partial_trace(self, keep_qubits: list) -> TmpDM:
+        """
+        Compute a density operator that applies to a subset
+         of the qubits.  The partial_trace operation effectively
+         removes the influence of the other qubits by swapping
+         in the expectation value of measuring them (I think).
+
+        @param keep_qubits:
+        @return:
+        """
+
+        qubit_ids = {x for x in range(self.qubit_count())}
+        keep_qubits = set(keep_qubits)
+        drop_qubits = qubit_ids.difference(keep_qubits)
+
+        # To keep subsystem A (keep_qubits), and trace out
+        # subsystem B (drop_qubits), we need a basis for the B-set,
+        # and the identity on the A-set
+        a_size, b_size = 2**len(keep_qubits), 2**len(drop_qubits)
+        b_basis = np.identity(b_size)
+        b_basis = [b_basis[:, i] for i in range(b_size)]
+        a_identity = identity_op.tensor_power(len(keep_qubits))
+
+        result = None
+        #op = self.to_numpy_array()
+        for j in b_basis:
+            j = StateVector(j.tolist())
+            j_ket = j.adjoint()
+            left_side = a_identity.tensor(j_ket)
+            right_side = a_identity.tensor(j)
+            step_result = left_side @ self
+            step_result = step_result @ right_side
+            if result:
+                result += step_result
+            else:
+                result = step_result
+
+        return result
+
+
+
+
+
+
 def rearrange_vector(tensor_permutation: map, state_vector: list, size=None):
     if not size:
         size = len(state_vector).bit_length() - 1
         # this will probably be wrong if the vector is not 2^n length
 
-    new_state = copy.deepcopy(state_vector)
+    new_state = list(state_vector)
 
     for idx in range(len(new_state)):
         new_idx = update_index(idx, tensor_permutation, size)
@@ -437,8 +527,11 @@ class QuantumState(object):
         if on_qubits is None and \
                 observable.qubit_count() == self.qubit_count():
             on_qubits = self.qubit_ids
+        elif not isinstance(on_qubits, list) and not isinstance(on_qubits, set):
+            on_qubits = [on_qubits]
 
         with self._align_to_end(observable, on_qubits) as ctxt:
+
             # Perform the measurement
             new_op, perm = ctxt
             state = self.get_value()
@@ -446,9 +539,9 @@ class QuantumState(object):
 
             # update the global quantum state to account for the measurement
             # and do this in-context because the shuffle needs to be applied
-            dm = vector.to_density_matrix()
-            projector = MatrixOperator(dm.to_array())
-            updated_state = (projector @ state) / math.sqrt(prob)
+            projector = vector.to_density_matrix()  # FIXME this doesn't seem right
+            updated_state = projector @ state
+            updated_state = updated_state.scale(1/math.sqrt(prob))
 
             self.set_value(updated_state)
 
@@ -458,7 +551,10 @@ class QuantumState(object):
 
         # reduce the measurement result to the user-visible qubits
         if not set(on_qubits) == set(self.qubit_ids):
-            vector = vector.partial_trace(on_qubits)
+            density = vector.to_density_matrix()
+            density = density.partial_trace(keep_qubits=on_qubits)
+            # FIXME:  what comes next here?
+
         values, vectors = observable.eig()
         for vidx, v in enumerate(vectors):
             if all(v == vector):
