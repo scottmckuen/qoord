@@ -155,10 +155,9 @@ def test_bell_pair_measurement():
         quantum_state = QuantumState([0, 1])
         quantum_state.set_value(bell_state)
         bob_op = pauli_z  # measure in the lab basis
-
         ev = quantum_state.measure(bob_op, [1])
 
-        # now allow alice to measure
+        # now allow alice to measure - she should see the same eigenvalue every time
         alice_op = pauli_z
         ev2 = quantum_state.measure(alice_op, [0])
 
@@ -407,6 +406,6 @@ def test_bell_state_partial_trace():
     expected = (ket0.to_density_matrix() + ket1.to_density_matrix())
     expected = expected.scale(0.5)
 
-    alice = alice_state.to_numpy_array()
-    expected = expected.to_numpy_array()
-    assert close_enough(alice._flat, expected._flat)
+    alice = alice_state.to_array(True).flat
+    expected = expected.to_array(True).flat
+    assert close_enough(alice, expected)

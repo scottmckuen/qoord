@@ -124,11 +124,6 @@ class StateVector(object):
     def __len__(self):
         return len(self._array)
 
-    def scale(self, scale_factor):
-        vector = self.to_numpy_array()
-        vector = [v*scale_factor for v in vector]
-        return StateVector(vector)
-
     def qubit_count(self):
         return int(math.log(len(self), 2))
 
@@ -195,14 +190,22 @@ class MatrixOperator(object):
         other_array = other.to_array()
         return np.array_equal(self_array, other_array)
 
-    def __matmul__(self, other: TmpMO | StateVector):
+    def __matmul__(self, other: TmpMO | StateVector | np.array):
         if isinstance(other, MatrixOperator) or isinstance(other, DensityMatrix):
             self_array = self.to_array(as_numpy=True)
             other_array = other.to_array(as_numpy=True)
             new_array = self_array @ other_array
             return MatrixOperator(components=new_array)
-        else:  # StateVector
+        elif isinstance(other, StateVector):  # StateVector
             return self.apply_to_vector(other)
+        elif isinstance(other, np.ndarray):
+            self_array = self.to_array(as_numpy=True)
+            new_array = self_array @ other
+            if 1 not in other.shape:  # not a vector
+                return MatrixOperator(new_array)  # this choice seems dodgy as fuck
+            else:
+                return new_array
+
 
     def apply_to_vector(self, vector: StateVector):
         vector_array = vector.to_numpy_array()
@@ -217,8 +220,11 @@ class MatrixOperator(object):
         power_func = self.lift(lambda x: cpower(x, exponent))  # does this get slow?
         return power_func(self)
 
-    def tensor(self, other: TmpMO):
-        array_out = np.kron(self._array, other._array)
+    def tensor(self, other: TmpMO | TmpSV):
+        if isinstance(other, StateVector):
+            array_out = np.kron(self._array, other.to_numpy_array())
+        else:
+            array_out = np.kron(self._array, other._array)
         return MatrixOperator(components=array_out)
 
     def tensor_power(self, num: int) -> TmpMO:
@@ -362,11 +368,11 @@ class DensityMatrix(MatrixOperator):
         return np.array_equal(self._array, other._array)
 
     def __add__(self, other: TmpDM):
-        content = self.to_numpy_array() + other.to_numpy_array()
+        content = self.to_array(True) + other.to_array(True)
         return DensityMatrix(content)
 
     def scale(self, scale_factor):
-        content = self.to_numpy_array() * scale_factor
+        content = self.to_array(True) * scale_factor
         return DensityMatrix(content)
 
     def partial_trace(self, keep_qubits: list) -> TmpDM:
@@ -396,16 +402,17 @@ class DensityMatrix(MatrixOperator):
         #op = self.to_numpy_array()
         for j in b_basis:
             j = StateVector(j.tolist())
-            j_ket = j.adjoint()
-            left_side = a_identity.tensor(j_ket)
+            jT = j.adjoint()
+            left_side = a_identity.tensor(jT)
             right_side = a_identity.tensor(j)
-            step_result = left_side @ self
-            step_result = step_result @ right_side
-            if result:
-                result += step_result
-            else:
+            step_result = left_side.to_array(True) @ self.to_array(True)
+            step_result = step_result @ right_side.to_array(True)
+            if result is None:
                 result = step_result
+            else:
+                result += step_result
 
+        result = DensityMatrix(result)
         return result
 
 
@@ -516,43 +523,47 @@ class QuantumState(object):
         self.set_value(v)
 
     def apply(self, operator: TmpMO, on_qubits: list) -> None:
-        with self._align_to_end(operator, on_qubits) as ctxt:
+        with self._align_to_end(operator, on_qubits) as context:
             # apply the full state operator
-            new_op, perm  = ctxt
+            new_op, perm = context
             v = self.get_value()
             v = new_op @ v
             self.set_value(v)
 
     def measure(self, observable: MatrixOperator, on_qubits: list | None = None):
-        if on_qubits is None and \
-                observable.qubit_count() == self.qubit_count():
-            on_qubits = self.qubit_ids
+        if on_qubits is None:
+            if observable.qubit_count() == self.qubit_count():
+                on_qubits = self.qubit_ids
+            else:
+                raise ValueError("Specify the qubits to measure!")
         elif not isinstance(on_qubits, list) and not isinstance(on_qubits, set):
-            on_qubits = [on_qubits]
+            on_qubits = [on_qubits]  # single qubit label of some kind?
 
-        with self._align_to_end(observable, on_qubits) as ctxt:
+        with self._align_to_end(observable, on_qubits) as context:
 
             # Perform the measurement
-            new_op, perm = ctxt
+            new_op, perm = context
             state = self.get_value()
-            result, vector, prob = new_op.measure(state, extra_data=True)
+            evalue, evector, probability = new_op.measure(state, extra_data=True)
 
             # update the global quantum state to account for the measurement
             # and do this in-context because the shuffle needs to be applied
-            projector = vector.to_density_matrix()  # FIXME this doesn't seem right
-            updated_state = projector @ state
-            updated_state = updated_state.scale(1/math.sqrt(prob))
+            projector = evector.to_density_matrix()  # because this uses the outer product
+            updated_state = projector @ state.to_numpy_array()  # project to the chosen eigenvector
+            updated_state = [s / math.sqrt(probability) for s in updated_state]
+            updated_state = StateVector(updated_state)
 
             self.set_value(updated_state)
 
             # some things we have to do manually
             inv_perm = invert_permutation(perm)
-            vector = vector.rearrange(inv_perm)
+            vector = evector.rearrange(inv_perm)  # return the eigenvector to the original arrangement
 
+        """        
         # reduce the measurement result to the user-visible qubits
+        current_state = self.get_value(force_density_matrix=True)
         if not set(on_qubits) == set(self.qubit_ids):
-            density = vector.to_density_matrix()
-            density = density.partial_trace(keep_qubits=on_qubits)
+            current_state = current_state.partial_trace(keep_qubits=on_qubits)
             # FIXME:  what comes next here?
 
         values, vectors = observable.eig()
@@ -560,5 +571,5 @@ class QuantumState(object):
             if all(v == vector):
                 break
         result = values[vidx]
-
-        return result
+        """
+        return evalue
