@@ -4,7 +4,6 @@ import math
 import numpy as np
 
 from copy import deepcopy
-from typing import SupportsFloat, TypeAlias
 
 """
 This is a lowest-level module that can safely be
@@ -15,7 +14,10 @@ DO NOT import any other part of qoord into this module.
 
 """
 
-Numeric: TypeAlias = SupportsFloat | complex
+
+def tupleize(array):
+    new_array = [tuple(r) for r in array]
+    return tuple(new_array)
 
 
 def eipn(n: int) -> complex:
@@ -46,7 +48,7 @@ def binary_list_to_int(x: list[chr]) -> int:
     return int(''.join(x), base=2)
 
 
-def update_index(x: int, permutation: map, size: int) -> int:
+def update_index(x: int, permutation: dict, size: int) -> int:
     x = int_to_binary_list(x, size)
     new_x = deepcopy(x)
     for old_idx, new_idx in permutation.items():

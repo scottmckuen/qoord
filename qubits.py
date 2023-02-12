@@ -25,10 +25,8 @@ class Qubit(object):
         self._quantum_state = state
         self._state_index = label
 
-    ZERO = StateVector([1, 0])  # the zero ket |0> gives the 0 bit-value
-    ONE = StateVector([0, 1])  # the one ket |0> gives the 1 bit-value
-    _eigenvalue_to_eigenvector = {1: ZERO, -1: ONE}
-    _eigenvector_to_bit = {ZERO: 0, ONE: 1}
+    _eigenvalue_to_eigenvector = {1: StateVector.ZERO, -1: StateVector.ONE}
+    _eigenvector_to_bit = {StateVector.ZERO: 0, StateVector.ONE: 1}
 
     def get_state(self, force_density_matrix=False):
         inner_state = self._quantum_state.get_value(force_density_matrix)

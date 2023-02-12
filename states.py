@@ -6,15 +6,15 @@ import typing
 import numpy as np
 
 from numbers import Number
-from typing import TypeAlias, TypeVar, Union
+from typing import TypeAlias, TypeVar
 
-from .__support__ import Numeric, ndim_zero_ket, update_index, is_square, _copy_array
+from .__support__ import ndim_zero_ket, update_index, tupleize
 
 # row and column vectors are both supported
-RowVector: TypeAlias = tuple[Numeric]
-ColumnVector: TypeAlias = tuple[tuple[Numeric]]
-VectorArray: TypeAlias = tuple[Numeric] | tuple[tuple[Numeric]]
-MatrixArray: TypeAlias = tuple[RowVector]
+RowVector: TypeAlias = tuple[Number, ...]
+ColumnVector: TypeAlias = tuple[tuple[Number], ...]
+VectorArray: TypeAlias = RowVector | ColumnVector
+MatrixArray: TypeAlias = tuple[RowVector, ...]
 
 # TmpMO exists because "Self"-typing isn't available until Python 3.11
 TmpSV = TypeVar("TmpSV", bound="StateVector")
@@ -142,7 +142,7 @@ class StateVector(object):
         new_array = self.to_numpy_array().conj().T
         return StateVector(new_array.tolist())
 
-    def dot(self, other: TmpSV) -> Numeric:
+    def dot(self, other: TmpSV) -> Number:
         other_parts = other.to_array()
         self_parts = self.to_array()
         parts = zip(self_parts, other_parts)
@@ -157,6 +157,10 @@ class StateVector(object):
     def rearrange(self, tensor_permutation):
         new_inner = rearrange_vector(tensor_permutation, self._array)
         return StateVector(new_inner)
+
+
+StateVector.ZERO = StateVector([1, 0])  # the zero ket |0> gives the 0 bit-value
+StateVector.ONE = StateVector([0, 1])  # the one ket |0> gives the 1 bit-value
 
 
 class MatrixOperator(object):
@@ -241,7 +245,7 @@ class MatrixOperator(object):
         if as_numpy:
             return self._array.copy()
         else:
-            return self._array.tolist()
+            return tupleize(self._array.tolist())
 
     def is_unitary(self):
         m = self._array
@@ -260,7 +264,7 @@ class MatrixOperator(object):
     def qubit_count(self):
         return int(math.log(self.dim(), 2))
 
-    def eig(self) -> tuple[list[Numeric], list[VectorArray]]:
+    def eig(self) -> tuple[list[Number], list[VectorArray]]:
         """
         Get the eigenvalue, eigenvector structure of the operator.
         Improves on np.linalg.eig by returning eigenvectors as
@@ -399,7 +403,7 @@ class DensityMatrix(MatrixOperator):
         a_identity = identity_op.tensor_power(len(keep_qubits))
 
         result = None
-        #op = self.to_numpy_array()
+
         for j in b_basis:
             j = StateVector(j.tolist())
             jT = j.adjoint()
@@ -414,10 +418,6 @@ class DensityMatrix(MatrixOperator):
 
         result = DensityMatrix(result)
         return result
-
-
-
-
 
 
 def rearrange_vector(tensor_permutation: map, state_vector: list, size=None):
@@ -435,6 +435,8 @@ def rearrange_vector(tensor_permutation: map, state_vector: list, size=None):
 
 
 def permute_to_end(move_these: list, total_set: list):
+    if not isinstance(total_set, list):
+        total_set = list(total_set)
     for q_val in move_these:
         qi = total_set.index(q_val)
         total_set.pop(qi)  # take q_val out

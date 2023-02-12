@@ -2,7 +2,7 @@ import math
 
 import numpy as np
 
-from .__support__ import close_enough, update_index
+from .__support__ import close_enough, update_index, tupleize
 from .states import StateVector, DensityMatrix, MatrixOperator, QuantumState, permute_to_end
 from .core_operators import identity_op, hadamard_op, cnot_op, pauli_z, pauli_x, phase_op
 from .gates import UnitaryGate
@@ -26,7 +26,7 @@ def test_setup():
     assert isinstance(qubit, Qubit)
     assert isinstance(device.get_state(), StateVector)
 
-    device.initialize(StateVector([1, 0]))
+    device.initialize(StateVector((1, 0)))
     qubit_state_value = qubit.get_state()
     assert isinstance(qubit_state_value, StateVector)
 
@@ -35,7 +35,7 @@ def test_setup():
 
 def test_two_qubits():
     device = Device(qubits=2)
-    device.initialize(StateVector([1, 0, 0, 0]))
+    device.initialize(StateVector((1, 0, 0, 0)))
 
     qubit = device.get_qubits(1)
     assert isinstance(qubit.get_state(), StateVector)
@@ -45,36 +45,36 @@ def test_two_qubits():
 
 def test_matrix_operator():
 
-    mo = MatrixOperator([[0, 1],
-                         [1, 0]])
+    mo = MatrixOperator(((0, 1),
+                         (1, 0)))
 
-    sv = StateVector(array=[0.3, 0.8])
+    sv = StateVector(array=(0.3, 0.8))
 
-    expected = StateVector(array=[0.8, 0.3])
+    expected = StateVector(array=(0.8, 0.3))
     actual = mo @ sv
 
     assert close_enough(actual.to_array(), expected.to_array())
 
 
 def test_matrix_operator_dimension():
-    mo = MatrixOperator([[0, 1],
-                         [1, 0]])
+    mo = MatrixOperator(((0, 1),
+                         (1, 0)))
     expected = 2
     actual = mo.dim()
     assert actual == expected
 
 
 def test_qubit_apply():
-    mo = MatrixOperator([[0, 1],
-                         [1, 0]])
+    mo = MatrixOperator(((0, 1),
+                         (1, 0)))
 
-    sv = StateVector(array=[0.3, 0.8])
+    sv = StateVector(array=(0.3, 0.8))
     state = QuantumState([0])
     state.set_value(sv)
     qb = Qubit(state=state, label=0)
     qb.apply(mo)
 
-    expected = StateVector(array=[0.8, 0.3])
+    expected = StateVector(array=(0.8, 0.3))
     actual = qb.get_state()
 
     assert close_enough(expected.to_array(), actual.to_array())
@@ -90,7 +90,7 @@ def test_superposition():
 
     device = Device(qubits=1)
 
-    init_state = StateVector([1, 0])
+    init_state = StateVector((1, 0))
     device.initialize(init_state)
     qubit = device.get_qubits(0)
 
@@ -99,19 +99,19 @@ def test_superposition():
     state = qubit.get_state()
     actual_array = state.to_array()
 
-    expected_state = StateVector([1, 1])
+    expected_state = StateVector((1, 1))
     expected_array = expected_state.to_array()
     assert close_enough(actual_array, expected_array)
 
 
 def test_cnot():
     device = Device(qubits=2)
-    device.initialize(StateVector([0, 0, 1, 0]))
+    device.initialize(StateVector((0, 0, 1, 0)))
 
     qubits = device.get_qubits([0, 1])
     CNOT(qubits)
 
-    expected = StateVector([0, 0, 0, 1])
+    expected = StateVector((0, 0, 0, 1))
     actual = device.get_state()
 
     assert close_enough(actual.to_array(), expected.to_array())
@@ -120,7 +120,7 @@ def test_cnot():
 def test_is_unitary_validation():
     """ Does UnitaryGate check for unitary input?"""
     try:
-        foo = [[1, 0], [0, 2]]  # not unitary, deliberately
+        foo = ((1, 0), (0, 2))  # not unitary, deliberately
         u = UnitaryGate(foo)
         assert False
     except:
@@ -129,20 +129,20 @@ def test_is_unitary_validation():
 
 def test_bell_pair():
 
-    init_state = StateVector([1, 0, 0, 0])
+    init_state = StateVector((1, 0, 0, 0))
 
     hadamard_2qb = hadamard_op.tensor(identity_op)
     state2 = hadamard_2qb @ init_state
     state3 = cnot_op @ state2
 
-    expected_state = StateVector([math.sqrt(1/2), 0, 0, math.sqrt(1/2)])
+    expected_state = StateVector((math.sqrt(1/2), 0, 0, math.sqrt(1/2)))
     assert close_enough(expected_state._array, state3._array)
 
 
 def test_state_vector_to_density_matrix():
-    sv = StateVector([1, 0])
+    sv = StateVector((1, 0))
     actual = sv.to_density_matrix()
-    expected = DensityMatrix([[1, 0], [0, 0]])
+    expected = DensityMatrix(((1, 0), (0, 0)))
 
     assert actual == expected
 
@@ -151,8 +151,8 @@ def test_bell_pair_measurement():
     n_runs = 1000
     success = 0
     for _ in range(n_runs):
-        bell_state = StateVector([math.sqrt(1/2), 0, 0, math.sqrt(1/2)])
-        quantum_state = QuantumState([0, 1])
+        bell_state = StateVector((math.sqrt(1/2), 0, 0, math.sqrt(1/2)))
+        quantum_state = QuantumState((0, 1))
         quantum_state.set_value(bell_state)
         bob_op = pauli_z  # measure in the lab basis
         ev = quantum_state.measure(bob_op, [1])
@@ -168,54 +168,54 @@ def test_bell_pair_measurement():
 
 
 def test_tensor_sv():
-    sv1 = StateVector([1, 2])
-    sv2 = StateVector([3, 4])
+    sv1 = StateVector((1, 2))
+    sv2 = StateVector((3, 4))
 
     sv3 = sv1.tensor(sv2)
     actual = sv3.to_array()
-    expected = StateVector._normalize([3, 4, 6, 8])
+    expected = StateVector._normalize((3, 4, 6, 8))
 
     assert close_enough(actual, expected)
 
 
 def test_density_matrix():
-    m = [1, 0]
+    m = (1, 0)
     sv1 = DensityMatrix(m)
 
     a1_actual = sv1.to_array()
-    a1_expected = np.outer(m, m).tolist()
+    a1_expected = tupleize(np.outer(m, m).tolist())
     assert a1_actual == a1_expected
 
-    sv2 = DensityMatrix([1/2, 1/2])
+    sv2 = DensityMatrix((1/2, 1/2))
 
     sv3 = sv1.tensor(sv2)
     actual = sv3.to_array()
-    expected = [[0.25, 0.25, 0, 0],
-                [0.25, 0.25, 0, 0],
-                [0, 0, 0, 0],
-                [0, 0, 0, 0]]
+    expected = ((0.25, 0.25, 0, 0),
+                (0.25, 0.25, 0, 0),
+                (0, 0, 0, 0),
+                (0, 0, 0, 0))
 
     assert actual == expected
 
 
 def test_tensor_mo():
-    mo1 = MatrixOperator([[1, 0], [0, -1]])
-    mo2 = MatrixOperator([[1, 0], [0, 1]])
+    mo1 = MatrixOperator(((1, 0), (0, -1)))
+    mo2 = MatrixOperator(((1, 0), (0, 1)))
 
     mo3 = mo1.tensor(mo2)
     actual = mo3.to_array()
-    expected = [[1, 0, 0, 0],
-                [0, 1, 0, 0],
-                [0, 0, -1, 0],
-                [0, 0, 0, -1]]
+    expected = ((1, 0, 0, 0),
+                (0, 1, 0, 0),
+                (0, 0, -1, 0),
+                (0, 0, 0, -1))
     assert actual == expected
 
     mo4 = mo2.tensor(mo1)
     actual = mo4.to_array()
-    expected = [[1, 0, 0, 0],
-                [0, -1, 0, 0],
-                [0, 0, 1, 0],
-                [0, 0, 0, -1]]
+    expected = ((1, 0, 0, 0),
+                (0, -1, 0, 0),
+                (0, 0, 1, 0),
+                (0, 0, 0, -1))
     assert actual == expected
 
 
@@ -224,7 +224,7 @@ def test_measurement_on_known_simple_states():
     Deterministic if we know the state and measure along 
     the appropriate axis.
     """
-    sv_0 = StateVector([1, 0])
+    sv_0 = StateVector((1, 0))
     observable = pauli_z
     vals, states = observable.eig()
     state_index = -1
@@ -244,7 +244,7 @@ def test_new_state():
     Hadamard:  measure once, confirm that the state updates 
     to correspond to the eigenstate of the eigenvalue
     """
-    init_state = StateVector([1 / 2, 1 / 2])
+    init_state = StateVector((1 / 2, 1 / 2))
     quantum_state = QuantumState(qubit_ids=[0])
     quantum_state.set_value(init_state)
 
@@ -253,12 +253,12 @@ def test_new_state():
 
     vals, states = observable.eig()
     if actual == 1:
-        expected_state = [1, 0]
+        expected_state = (1, 0)
     elif actual == -1:
-        expected_state = [0, 1]
+        expected_state = (0, 1)
 
     actual_state = states[vals.tolist().index(actual)]
-    actual_state = actual_state.tolist()
+    actual_state = tuple(actual_state.tolist())
     assert actual_state == expected_state
 
 
@@ -266,10 +266,10 @@ def test_simple_statistics():
     """
     Hadamard:  measure a bunch of independents, get 50/50
     """
-    N_RUNS = 10000
+    n_runs = 10000
     p_expected = 0.5
-    mu = p_expected*N_RUNS
-    sigma = math.sqrt(p_expected*p_expected*N_RUNS)
+    mu = p_expected*n_runs
+    sigma = math.sqrt(p_expected*p_expected*n_runs)
 
     observable = pauli_z
     vals, states = observable.eig()
@@ -278,14 +278,14 @@ def test_simple_statistics():
     for v in vals:
         results[v] = 0
 
-    for run in range(N_RUNS):
-        init_state = StateVector([1/2, 1/2])
+    for run in range(n_runs):
+        init_state = StateVector((1/2, 1/2))
         actual = observable.measure(init_state)
         results[actual] += 1
 
     count1 = results[vals[0]]
     zscore = abs(count1 - mu)/sigma
-    actual_rate = count1/N_RUNS
+    actual_rate = count1/n_runs
 
     # 3.7 Z-score is about 1 in 10K false-negative
     assert math.isclose(actual_rate, 0.5, abs_tol=3.7*zscore)
@@ -301,7 +301,7 @@ def test_second_measurement_consistency():
     test_value = ev[0]
     good_samples = 0
     good_seconds = 0
-    init_state = StateVector([1 / 2, 1 / 2])
+    init_state = StateVector((1 / 2, 1 / 2))
     for n in range(1000):
         quantum_state = QuantumState(qubit_ids=[0])
         quantum_state.set_value(init_state)
@@ -330,7 +330,7 @@ def test0_45_90():
 
     good_count = 0
     for n in range(n_runs):
-        a_system = StateVector([1, 1])
+        a_system = StateVector((1, 1))
         v = pauli_z.measure(a_system)
         if v != evz[0]:  # only the first passes the filter
             continue
@@ -380,10 +380,10 @@ def test_bell_state_coerce_density_matrix():
     qubit = device.get_qubit(0)
     state = qubit.get_state(force_density_matrix=True)
 
-    expected_state = DensityMatrix([[0.5, 0, 0, 0.5],
-                                    [0, 0, 0, 0],
-                                    [0, 0, 0, 0],
-                                    [0.5, 0, 0, 0.5]])
+    expected_state = DensityMatrix(((0.5, 0, 0, 0.5),
+                                    (0, 0, 0, 0),
+                                    (0, 0, 0, 0),
+                                    (0.5, 0, 0, 0.5)))
 
     actual_state_array = state.to_array(as_numpy=True)
     expected_state_array = expected_state.to_array(as_numpy=True)
@@ -400,8 +400,8 @@ def test_bell_state_partial_trace():
     #  this is the thing we partial trace on:  trace out Bob / qubit1
     alice_state = state.partial_trace(keep_qubits=[0])
 
-    ket0 = StateVector([1, 0])
-    ket1 = StateVector([0, 1])
+    ket0 = StateVector((1, 0))
+    ket1 = StateVector((0, 1))
 
     expected = (ket0.to_density_matrix() + ket1.to_density_matrix())
     expected = expected.scale(0.5)
@@ -409,3 +409,49 @@ def test_bell_state_partial_trace():
     alice = alice_state.to_array(True).flat
     expected = expected.to_array(True).flat
     assert close_enough(alice, expected)
+
+
+def test_partial_trace_00():
+    ket = StateVector((1, 0, 0, 0))
+
+    state = ket.to_density_matrix()
+    reduced_state = state.partial_trace(keep_qubits=[0])
+    reduced_state = reduced_state.to_array(as_numpy=True)
+
+    single_ket = StateVector((1, 0))
+    expected_state = single_ket.to_density_matrix().to_array(as_numpy=True)
+    assert np.array_equal(expected_state, reduced_state)
+
+
+def test_partial_trace_01():
+
+    ket = StateVector((0, 1, 0, 0))
+
+    state = ket.to_density_matrix()
+    reduced_state = state.partial_trace(keep_qubits=[1])
+    reduced_state = reduced_state.to_array(as_numpy=True)
+
+    single_ket = StateVector((0, 1))
+    expected_state = single_ket.to_density_matrix().to_array(as_numpy=True)
+    assert np.array_equal(expected_state, reduced_state)
+
+
+def test_partial_trace_01010():
+
+    zero = StateVector.ZERO
+    one = StateVector.ONE
+
+    ket = zero.tensor(one)
+    ket = ket.tensor(zero)
+    ket = ket.tensor(one)
+    ket = ket.tensor(zero)
+
+    state = ket.to_density_matrix()
+    reduced_state = state.partial_trace(keep_qubits=[3, 1])
+    reduced_state = reduced_state.to_array(as_numpy=True)
+
+    expected_state = one.tensor(one)
+    expected_state = expected_state.to_density_matrix()
+    expected_state = expected_state.to_array(as_numpy=True)
+
+    assert np.array_equal(expected_state, reduced_state)
