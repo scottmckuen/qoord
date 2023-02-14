@@ -3,7 +3,7 @@ import math
 import numpy as np
 
 from .__support__ import close_enough, update_index, tupleize
-from .states import StateVector, DensityMatrix, MatrixOperator, QuantumState, permute_to_end
+from .states import StateVector, DensityMatrix, MatrixOperator, QuantumState, permute_to_end, numeric_list_to_permutation
 from .core_operators import identity_op, hadamard_op, cnot_op, pauli_z, pauli_x, phase_op
 from .gates import UnitaryGate
 from .core_gates import Hadamard, CNOT, PauliX
@@ -406,9 +406,9 @@ def test_bell_state_partial_trace():
     expected = (ket0.to_density_matrix() + ket1.to_density_matrix())
     expected = expected.scale(0.5)
 
-    alice = alice_state.to_array(True).flat
-    expected = expected.to_array(True).flat
-    assert close_enough(alice, expected)
+    alice_array = alice_state.to_array(True)
+    expected_array = expected.to_array(True)
+    assert close_enough(alice_array, expected_array)
 
 
 def test_partial_trace_00():
@@ -436,6 +436,45 @@ def test_partial_trace_01():
     assert np.array_equal(expected_state, reduced_state)
 
 
+def test_partial_trace_100():
+
+    ket = StateVector((1, 0, 0, 0, 0, 0, 0, 0))
+
+    state = ket.to_density_matrix()
+    reduced_state = state.partial_trace(keep_qubits=[0])
+    reduced_state = reduced_state.to_array(as_numpy=True)
+
+    zero = StateVector.ZERO
+    expected_state = zero.to_density_matrix().to_array(as_numpy=True)
+    assert np.array_equal(expected_state, reduced_state)
+
+    reduced_state = state.partial_trace(keep_qubits=[1, 2])
+    reduced_state = reduced_state.to_array(True)
+    expected_state = zero.tensor(zero)
+    expected_state = expected_state.to_density_matrix().to_array(as_numpy=True)
+    assert np.array_equal(expected_state, reduced_state)
+
+
+def test_partial_trace_010():
+
+    one = StateVector.ONE
+    zero = StateVector.ZERO
+    ket = zero.tensor(one).tensor(zero)
+
+    state = ket.to_density_matrix()
+    reduced_state = state.partial_trace(keep_qubits=[1])
+    reduced_state = reduced_state.to_array(as_numpy=True)
+
+    expected_state = one.to_density_matrix().to_array(as_numpy=True)
+    assert np.array_equal(expected_state, reduced_state)
+
+    reduced_state = state.partial_trace(keep_qubits=[0, 2])
+    reduced_state = reduced_state.to_array(True)
+    expected_state = zero.tensor(zero)
+    expected_state = expected_state.to_density_matrix().to_array(as_numpy=True)
+    assert np.array_equal(expected_state, reduced_state)
+
+
 def test_partial_trace_01010():
 
     zero = StateVector.ZERO
@@ -455,3 +494,9 @@ def test_partial_trace_01010():
     expected_state = expected_state.to_array(as_numpy=True)
 
     assert np.array_equal(expected_state, reduced_state)
+
+
+def test_numeric_list_to_permutation():
+    p_expected = {0: 1, 1: 0}
+    p_actual = numeric_list_to_permutation([3, 1])
+    assert p_actual == p_expected

@@ -1,4 +1,5 @@
 import contextlib
+import copy
 import math
 import random
 import typing
@@ -127,11 +128,14 @@ class StateVector(object):
     def qubit_count(self):
         return int(math.log(len(self), 2))
 
-    def tensor(self, other: TmpSV) -> TmpSV:
-        array_out = np.tensordot(self._array, other._array, axes=0)
-        array_out = array_out.reshape([array_out.size, ])
-        array_out = [x for x in array_out]
-        result = StateVector(array_out)
+    def tensor(self, other: TmpSV | TmpMO) -> TmpSV | TmpMO:
+        self_array = self.to_numpy_array()
+        other_array = other.to_numpy_array()
+        array_out = np.kron(self_array, other_array)
+        if 1 in array_out.shape:
+            result = StateVector(array_out.tolist())
+        else:
+            result = MatrixOperator(array_out)
         return result
 
     def outer(self, other: TmpSV) -> TmpMO:
@@ -194,6 +198,15 @@ class MatrixOperator(object):
         other_array = other.to_array()
         return np.array_equal(self_array, other_array)
 
+    def __add__(self, other: TmpMO):
+        shape1 = self.shape()
+        shape2 = other.shape()
+        if shape1 != shape2:
+            msg = f"Wrong shape for '+'!  Self: {shape1}; other: {shape2}"
+            raise ValueError(msg)
+        new_array = self.to_array(True) + other.to_array(True)
+        return MatrixOperator(new_array)
+
     def __matmul__(self, other: TmpMO | StateVector | np.array):
         if isinstance(other, MatrixOperator) or isinstance(other, DensityMatrix):
             self_array = self.to_array(as_numpy=True)
@@ -226,7 +239,9 @@ class MatrixOperator(object):
 
     def tensor(self, other: TmpMO | TmpSV):
         if isinstance(other, StateVector):
-            array_out = np.kron(self._array, other.to_numpy_array())
+            self_array = self.to_array(as_numpy=True)
+            other_array = other.to_numpy_array()
+            array_out = np.kron(self_array, other_array)
         else:
             array_out = np.kron(self._array, other._array)
         return MatrixOperator(components=array_out)
@@ -246,6 +261,9 @@ class MatrixOperator(object):
             return self._array.copy()
         else:
             return tupleize(self._array.tolist())
+
+    def to_numpy_array(self):
+        return self.to_array(True)
 
     def is_unitary(self):
         m = self._array
@@ -355,7 +373,7 @@ identity_op = MatrixOperator([[1, 0],
 
 
 class DensityMatrix(MatrixOperator):
-    def __init__(self, array: MatrixArray | VectorArray):
+    def __init__(self, array: MatrixArray | VectorArray | MatrixOperator):
         """
         Contract:  self._array is always a (nested?) list,
         and we only use np.arrays to assist with calculations
@@ -366,6 +384,8 @@ class DensityMatrix(MatrixOperator):
                 not isinstance(array[0], typing.Sequence):
             # this is a vector input, so we want to cast it to a square array
             array = np.outer(array, array).tolist()
+        elif isinstance(array, MatrixOperator):
+            array = array.to_numpy_array()
         super().__init__(array)
 
     def __eq__(self, other: TmpDM):
@@ -385,6 +405,8 @@ class DensityMatrix(MatrixOperator):
          of the qubits.  The partial_trace operation effectively
          removes the influence of the other qubits by swapping
          in the expectation value of measuring them (I think).
+         The result is the density operator for the qubits
+         you want to keep.
 
         @param keep_qubits:
         @return:
@@ -394,33 +416,43 @@ class DensityMatrix(MatrixOperator):
         keep_qubits = set(keep_qubits)
         drop_qubits = qubit_ids.difference(keep_qubits)
 
-        # To keep subsystem A (keep_qubits), and trace out
-        # subsystem B (drop_qubits), we need a basis for the B-set,
-        # and the identity on the A-set
-        a_size, b_size = 2**len(keep_qubits), 2**len(drop_qubits)
-        b_basis = np.identity(b_size)
-        b_basis = [b_basis[:, i] for i in range(b_size)]
-        a_identity = identity_op.tensor_power(len(keep_qubits))
+        # we need to change to a basis of the form a_i * b_j where
+        # the a_i represent qubits to trace out and b_j represent things to keep
+        perm = permute_to_end(move_these=keep_qubits, total_set=qubit_ids)
+        self_array = rearrange_matrix(perm, self.to_array(False))
+        self_array = DensityMatrix(self_array).to_array(True)
+
+        # To keep subsystem B (keep_qubits), and trace out
+        # subsystem A (drop_qubits), we need a basis for the A-set,
+        # and the identity on the B-set.
+        keep_size, drop_size = 2**len(keep_qubits), 2**len(drop_qubits)
+        drop_basis = np.identity(drop_size)
+        drop_basis = [drop_basis[:, i] for i in range(drop_size)]
+        keep_identity = identity_op.tensor_power(len(keep_qubits))
 
         result = None
 
-        for j in b_basis:
+        for j in drop_basis:
             j = StateVector(j.tolist())
             jT = j.adjoint()
-            left_side = a_identity.tensor(jT)
-            right_side = a_identity.tensor(j)
-            step_result = left_side.to_array(True) @ self.to_array(True)
-            step_result = step_result @ right_side.to_array(True)
+            left_side = jT.tensor(keep_identity)
+            right_side = j.tensor(keep_identity)
+            step_result = left_side @ self_array  # here is where we use the permuted form
+            step_result = step_result @ right_side
             if result is None:
                 result = step_result
             else:
                 result += step_result
 
+        little_perm = numeric_list_to_permutation(keep_qubits)
+        undo_little_perm = invert_permutation(little_perm)
+
+        result = rearrange_matrix(undo_little_perm, result.to_array(False))
         result = DensityMatrix(result)
         return result
 
 
-def rearrange_vector(tensor_permutation: map, state_vector: list, size=None):
+def rearrange_vector(tensor_permutation: dict, state_vector: list, size=None):
     if not size:
         size = len(state_vector).bit_length() - 1
         # this will probably be wrong if the vector is not 2^n length
@@ -432,6 +464,19 @@ def rearrange_vector(tensor_permutation: map, state_vector: list, size=None):
         new_state[new_idx] = state_vector[idx]
 
     return new_state
+
+
+def rearrange_matrix(tensor_permutation: dict, matrix: MatrixArray):
+    new_matrix = [[x for x in row] for row in matrix]
+    size = len(new_matrix).bit_length() - 1
+    n = len(new_matrix)
+    for row in range(n):
+        new_row = update_index(row, tensor_permutation, size)
+        for col in range(n):
+            new_col = update_index(col, tensor_permutation, size)
+            new_matrix[new_row][new_col] = matrix[row][col]
+
+    return new_matrix
 
 
 def permute_to_end(move_these: list, total_set: list):
@@ -446,9 +491,29 @@ def permute_to_end(move_these: list, total_set: list):
     return perm
 
 
-def invert_permutation(permutation):
+def invert_permutation(permutation: dict) -> dict:
     new_perm = {v: k for k, v in permutation.items()}
     return new_perm
+
+
+def numeric_list_to_permutation(a_list: list) -> dict:
+    """
+    This forgets the numbers in the list and just builds a map from
+    their current index in a_list and
+    @param a_list:
+    @return:
+    """
+    sorted_list = sorted(a_list)
+    reverse_map = {}
+    perm = {}
+    for idx, v, in enumerate(sorted_list):
+        reverse_map[v] = idx
+
+    for idx, v in enumerate(a_list):
+        perm[idx] = reverse_map[v]
+
+    return perm
+
 
 
 class QuantumState(object):
@@ -498,6 +563,13 @@ class QuantumState(object):
         on the tail of the internal qubit list; permute the global state
         to put the key qubits at the end, in the order listed; then
         yield to whatever needs to be done; finally permute the state back
+
+        NOTE:  nothing inside this function uses the original labels
+        for the on_qubits entries - those would have to be re-indexed
+        to account for the permutation before they could be used in any
+        matrix calculations.  See DensityMatrix.partial_trace for an
+        example that needs to do this, therefore can't use this context
+        manager.
         """
         # 1) tensor the operator with a bunch of identities
         gate_qubits = operator.dim().bit_length() - 1
