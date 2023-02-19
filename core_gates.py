@@ -1,11 +1,12 @@
+from .states import identity_op
 from .gates import UnitaryGate
 from .core_operators import *
 
-Identity = UnitaryGate(identity_op).__call__
-PauliX = UnitaryGate(pauli_x).__call__
-PauliY = UnitaryGate(pauli_y).__call__
-PauliZ = UnitaryGate(pauli_z).__call__
-Hadamard = UnitaryGate(hadamard_op).__call__
-S = UnitaryGate(phase_op).__call__
-T = UnitaryGate(pi_over_8_gate_op).__call__
-CNOT = UnitaryGate(cnot_op).__call__
+Identity = UnitaryGate(identity_op)
+PauliX = UnitaryGate(pauli_x)
+PauliY = UnitaryGate(pauli_y)
+PauliZ = UnitaryGate(pauli_z)
+Hadamard = UnitaryGate(hadamard_op)
+S = UnitaryGate(phase_op)
+T = UnitaryGate(pi_over_8_gate_op)
+CNOT = UnitaryGate(cnot_op)
