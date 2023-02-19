@@ -54,7 +54,7 @@ def update_index(x: int, permutation: dict, size: int) -> int:
     for old_idx, new_idx in permutation.items():
         # Instead of breaking here, do you actually want to assert or raise?
         if old_idx >= len(x):
-            break
+            raise ValueError(f"Permutation is wrong length? {len(x)}, {old_idx}")
         new_x[new_idx] = x[old_idx]
 
     new_x = binary_list_to_int(new_x)

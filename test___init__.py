@@ -3,8 +3,9 @@ import math
 import numpy as np
 
 from .__support__ import close_enough, update_index, tupleize
-from .states import StateVector, DensityMatrix, MatrixOperator, QuantumState, permute_to_end, numeric_list_to_permutation
-from .core_operators import identity_op, hadamard_op, cnot_op, pauli_z, pauli_x, phase_op
+from .states import StateVector, DensityMatrix, MatrixOperator, QuantumState, \
+    identity_op, permute_to_end, numeric_list_to_permutation
+from .core_operators import hadamard_op, cnot_op, pauli_z, pauli_x, phase_op
 from .gates import UnitaryGate
 from .core_gates import Hadamard, CNOT, PauliX
 from .qubits import Qubit
@@ -18,6 +19,11 @@ def test_support_binary():
     actual = update_index(original, shuffle, 9)
     assert actual == expected
 
+    shuffle = {0: 9, 9: 0}
+    original = 1000
+    expected = 489
+    actual = update_index(original, shuffle, 2)
+    assert actual == expected
 
 def test_setup():
     device = Device(qubits=1)
