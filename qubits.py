@@ -25,9 +25,6 @@ class Qubit(object):
         self._quantum_state = state
         self._state_index = label
 
-    _eigenvalue_to_eigenvector = {1: StateVector.ZERO, -1: StateVector.ONE}
-    _eigenvector_to_bit = {StateVector.ZERO: 0, StateVector.ONE: 1}
-
     def get_state(self, force_density_matrix=False):
         inner_state = self._quantum_state.get_value(force_density_matrix)
         return deepcopy(inner_state)
@@ -38,9 +35,7 @@ class Qubit(object):
 
     def measure(self, observable:  MatrixOperator):
         eigenvalue = self._quantum_state.measure(observable, self._state_index)
-        eigenvector = self._eigenvalue_to_eigenvector[eigenvalue]
-        bit_value = self._eigenvector_to_bit[eigenvector]
-        return bit_value
+        return eigenvalue
 
 
 class QubitSet(object):

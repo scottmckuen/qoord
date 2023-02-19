@@ -366,16 +366,21 @@ def test_2qubit_gate_on_bigger_state():
     device = Device(qubits=5)
     # select a 2-qubit subsystem (#3 and #1)
     q1, q3 = device.get_qubits(keys=[1, 3])
+
     # initialize q3 to |1> to control the CNOT (X-gate is a classical NOT gate)
     PauliX(q3)
     # this should flip q1 from |0> to |1> because q3 = |1>
     CNOT(q3, q1)
 
-    # this returns the eigenvalue
-    actual = q3.measure(pauli_z)
-    # map the measured value to |0> or |1>
-    expected = 1
+    # this returns the eigenvalue, either 1 (for state |0>) or -1 (|1>)
+    actual = q3.measure(pauli_z)  # should be -1
 
+    # map the measured value to |0> or |1>
+    expected = -1
+
+    assert actual == expected
+
+    actual = q1.measure(pauli_z)  # should also be -1 because of CNOT earlier
     assert actual == expected
 
 
