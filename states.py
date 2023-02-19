@@ -1,5 +1,4 @@
 import contextlib
-import copy
 import math
 import random
 import typing
@@ -46,7 +45,7 @@ class StateVector(object):
     @classmethod
     def _normalize(cls, array):
         # need to make sure array norms to 1
-        norm = math.sqrt(sum([x * x for x in array]))
+        norm = math.sqrt(sum([x * np.conj(x) for x in array]))
         if norm != 1:
             normed_array = [x / norm for x in array]
         else:
@@ -325,7 +324,7 @@ class MatrixOperator(object):
     def measure(self, state: StateVector | TmpMO, extra_data=False) \
             -> float | tuple[float, TmpSV, float]:
         eigenvalues, eigenstates, coefficients = self.distribution(state)
-        probabilities = [c*c for c in coefficients]
+        probabilities = [c*np.conj(c) for c in coefficients]
 
         n_choices = len(eigenvalues)
         select = random.choices(range(n_choices), probabilities, k=1)
