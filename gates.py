@@ -29,6 +29,10 @@ class UnitaryGate:
             qubits = qubit
         qubits.apply(self._matrix)
 
+    def __pow__(self, exponent):
+        new_matrix = self._matrix.__pow__(exponent)
+        return UnitaryGate(new_matrix)
 
 
-
+    def to_operator(self):
+        return self._matrix
