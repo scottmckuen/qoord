@@ -82,3 +82,32 @@ def _copy_array(a):
     except:
         pass
     return new_a
+
+
+def closest(val, items, tolerance=1e-15):
+    """
+    Sometimes floating-point issues cause a measured value to
+    be slightly different from the expected value.  If we have a
+    set of known target values, this picks the closest one,
+    within some tolerance
+    @param val:  the candidate value that should be in the list of items
+    @param items:  allowed set of values
+    @param tolerance:  maximum allowed discrepancy
+    @return: the entry from items that is closest, within the tolerance
+    """
+    gap = np.inf
+    best_val = None
+    for item in items:
+        delta = item - val
+        d2 = delta * np.conj(delta)  # could be complex-valued
+        if d2 > tolerance:
+            continue
+        if d2 < gap:
+            gap = d2
+            best_val = item
+    print(f"Smallest gap is {gap}")
+    if best_val is None:
+        msg = f"Could not find match for {val} within tolerance {tolerance}"
+        raise ValueError(msg)
+    return best_val
+
