@@ -105,7 +105,7 @@ def closest(val, items, tolerance=1e-15):
         if d2 < gap:
             gap = d2
             best_val = item
-    print(f"Smallest gap is {gap}")
+    #print(f"Smallest gap is {gap}")
     if best_val is None:
         msg = f"Could not find match for {val} within tolerance {tolerance}"
         raise ValueError(msg)
