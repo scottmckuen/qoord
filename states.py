@@ -183,8 +183,8 @@ class MatrixOperator(object):
             basis = [np.outer(v, v) for v in vectors]
             new_vals = [function(val) for val in values]
             matrix_new = sum([val * vec for val, vec in zip(new_vals, basis)])
-            mo_new = MatrixOperator(matrix_new)
-            return mo_new
+            op_new = MatrixOperator(matrix_new)
+            return op_new
         return new_func
 
     def __init__(self, components: MatrixArray):
