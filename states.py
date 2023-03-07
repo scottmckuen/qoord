@@ -197,6 +197,10 @@ class MatrixOperator(object):
         other_array = other.to_array()
         return np.array_equal(self_array, other_array)
 
+    def __neg__(self):
+        new_array = -self.to_array(True)
+        return MatrixOperator(new_array)
+
     def __add__(self, other: TmpMO):
         shape1 = self.shape()
         shape2 = other.shape()
