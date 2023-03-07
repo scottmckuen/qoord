@@ -50,6 +50,10 @@ class QubitSet(object):
         state = self._global_state
         state.apply(operator, self._state_indexes)
 
+    def measure(self, observable:  MatrixOperator):
+        eigenvalue = self._global_state.measure(observable, on_qubits=self._state_indexes)
+        return eigenvalue
+
     def __iter__(self):
         for idx in self._state_indexes:
             yield Qubit(self._global_state, idx)
