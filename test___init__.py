@@ -7,7 +7,7 @@ from .states import StateVector, DensityMatrix, MatrixOperator, QuantumState, \
     identity_op, permute_to_end, numeric_list_to_permutation
 from .core_operators import hadamard_op, cnot_op, pauli_z, pauli_x, phase_op
 from .gates import UnitaryGate
-from .core_gates import Hadamard, CNOT, PauliX
+from .core_gates import Hadamard, CNOT, PauliX, PauliZ as Z, Identity as I
 from .qubits import Qubit
 from .devices import Device
 
@@ -511,3 +511,16 @@ def test_numeric_list_to_permutation():
     p_expected = {0: 1, 1: 0}
     p_actual = numeric_list_to_permutation([3, 1])
     assert p_actual == p_expected
+
+
+def test_mo_distribution():
+    op = Z.tensor(I).to_operator()
+    device = Device(qubits=2)
+    device.make_bell_pair([0, 1])
+
+    qubit = device.get_qubit(0)
+    state = qubit.get_state()
+    projectors, probabilities = op.distribution(state)
+    print(probabilities)
+    assert all([math.isclose(p, 0.5) for p in probabilities.values()])
+

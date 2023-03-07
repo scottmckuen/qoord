@@ -124,6 +124,19 @@ class StateVector(object):
     def __len__(self):
         return len(self._array)
 
+    def __matmul__(self, other):
+        if isinstance(other, StateVector):
+            return self.dot(other)
+        elif isinstance(other, MatrixOperator):
+            self_array = self.to_numpy_array()
+            other_array = other.to_array(as_numpy=True)
+            new_value = self_array @ other_array
+            return StateVector(new_value.tolist())
+        elif isinstance(other, np.ndarray):
+            self_array = self.to_numpy_array()
+            new_value = self_array @ other
+            return StateVector(new_value.tolist())
+
     def qubit_count(self):
         return int(math.log(len(self), 2))
 
@@ -191,6 +204,7 @@ class MatrixOperator(object):
         # FIXME: should we do the same thing as SV and DM
         # and coerce this to a list of lists?
         self._array = np.array(components)
+        self._projectors = None
 
     def __eq__(self, other: TmpMO):
         self_array = self.to_array()
@@ -225,7 +239,6 @@ class MatrixOperator(object):
                 return MatrixOperator(new_array)  # this choice seems dodgy as fuck
             else:
                 return new_array
-
 
     def apply_to_vector(self, vector: StateVector):
         vector_array = vector.to_numpy_array()
@@ -288,8 +301,9 @@ class MatrixOperator(object):
     def eig(self) -> tuple[list[Number], list[VectorArray]]:
         """
         Get the eigenvalue, eigenvector structure of the operator.
-        Improves on np.linalg.eig by returning eigenvectors as
-        a list, rather than a numpy array, for clarity
+        Differs from np.linalg.eig by returning eigenvectors as
+        a list, rather than a numpy array, for clarity (numpy "eig"
+        chooses a surprising order for presenting the vectors).
 
         @return: values, vectors
             - values:  List[numeric]
@@ -319,27 +333,63 @@ class MatrixOperator(object):
         idx = values.index(eigenvalue)
         return vectors[idx]
 
+    def projectors(self):
+        """
+        Get the projection operators for the eigenvalues
+        of this operator.
+
+        @return: dictionary mapping eigenvalue to subspace projector
+        """
+        if not self._projectors:
+            values, states = self.eig()
+            projector_map = {}
+            for v, s in zip(values, states):
+                if v not in projector_map:
+                    projector_map[v] = 0
+                projector_map[v] += np.outer(s, s)
+
+            self._projectors = {v: MatrixOperator(p) for v, p in projector_map.items()}
+
+        return self._projectors
+
     def distribution(self, state: StateVector | TmpMO):
-        eigenvalues, eigenstates = self.eig()
-        eigenstates = [StateVector(s.tolist()) for s in eigenstates]
-        coefficients = [state.dot(s) for s in eigenstates]
-        return eigenvalues, eigenstates, coefficients
+        """
+        Compute the distribution of the eigenvalues of this
+        operator when measuring on a given state.
+        @param state: quantum state to measure
+        @return:
+            options - the eigenvalue-projector map (dict)
+            probabilities - eigenvalue-probability map (dict)
+        """
+        saj = state.adjoint().to_numpy_array()
+        state = state.to_numpy_array()
+        options = self.projectors()
+        probabilities = {}
+        for val, proj in options.items():
+            proj = proj.to_numpy_array()
+            prob = (saj @ proj @ state).item()
+            probabilities[val] = prob.real
+
+        return options, probabilities
 
     def measure(self, state: StateVector | TmpMO, extra_data=False) \
             -> float | tuple[float, TmpSV, float]:
-        eigenvalues, eigenstates, coefficients = self.distribution(state)
-        probabilities = [c*np.conj(c) for c in coefficients]
-
-        n_choices = len(eigenvalues)
-        select = random.choices(range(n_choices), probabilities, k=1)
+        options, probabilities = self.distribution(state)
+        eigenvalues = list(options.keys())
+        sampler = [probabilities[v] for v in eigenvalues]
+        n_choices = len(options)
+        select = random.choices(range(n_choices), sampler, k=1)
         result_idx = select[0]
 
         value = eigenvalues[result_idx]
-        vector = eigenstates[result_idx]
-        p = probabilities[result_idx]
+        projector = options[value].to_numpy_array()
+        sample_probability = sampler[result_idx]
+        post_measurement_vector = (projector @ state.to_numpy_array())/math.sqrt(sample_probability)
+        post_measurement_vector = StateVector(post_measurement_vector.tolist())
+        p = sampler[result_idx]
 
         if extra_data:
-            return value, vector, p
+            return value, post_measurement_vector, p
         else:
             return value
 
@@ -455,7 +505,7 @@ class DensityMatrix(MatrixOperator):
         return result
 
 
-def rearrange_vector(tensor_permutation: dict, state_vector: list, size=None):
+def rearrange_vector(tensor_permutation: dict, state_vector: list | tuple, size=None):
     if not size:
         size = len(state_vector).bit_length() - 1
         # this will probably be wrong if the vector is not 2^n length
