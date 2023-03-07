@@ -63,6 +63,8 @@ class Device(object):
         return results
 
     def make_bell_pair(self, qubits):
-        q1, q2 = self.get_qubits([0, 1])
+        q1, q2 = self.get_qubits(qubits)
         Hadamard(q1)  # create superposition
         CNOT(q1, q2)  # entangle first shared pair
+        return QubitSet([q1, q2])
+
