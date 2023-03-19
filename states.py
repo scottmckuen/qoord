@@ -81,7 +81,6 @@ class StateVector(object):
             self._as_ket = vtype == 'column'
             self._array = self._normalize(array)
 
-
     @classmethod
     def _vector_type(cls, data):
         # assume the data is already a list or tuple
@@ -108,7 +107,6 @@ class StateVector(object):
         else:
             vtype = 'r'  # bras are row vectors
         return np.r_[vtype, self._array].A
-
 
     def __repr__(self):
         return str(self._array)  # we just care about the contents
@@ -568,7 +566,6 @@ def numeric_list_to_permutation(a_list: list) -> dict:
     return perm
 
 
-
 class QuantumState(object):
 
     def __init__(self, qubit_ids):
@@ -657,7 +654,7 @@ class QuantumState(object):
             v = new_op @ v
             self.set_value(v)
 
-    def measure(self, observable: MatrixOperator, on_qubits: list | None = None):
+    def measure(self, observable: MatrixOperator, on_qubits: tuple | list | None = None):
         if on_qubits is None:
             if observable.qubit_count() == self.qubit_count():
                 on_qubits = self.qubit_ids

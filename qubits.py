@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 from .__support__ import closest
-from .states import StateVector, MatrixOperator, QuantumState
+from .states import MatrixOperator, QuantumState
 
 
 class Qubit(object):
@@ -22,7 +22,7 @@ class Qubit(object):
     but the devices would only have access to some of the state.
 
     """
-    def __init__(self, state: QuantumState, label: int = 0):
+    def __init__(self, state: QuantumState, label: int | str = 0):
         self._quantum_state = state
         self._state_index = label
 
@@ -76,4 +76,3 @@ def binary_from_measurement(observable, qubit):
     measurement_corrected = closest(measurement, values)
     chosen_action = actions[measurement_corrected]
     return chosen_action
-

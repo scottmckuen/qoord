@@ -4,6 +4,7 @@ import math
 import numpy as np
 
 from copy import deepcopy
+from numbers import Number
 
 """
 This is a lowest-level module that can safely be
@@ -61,7 +62,7 @@ def update_index(x: int, permutation: dict, size: int) -> int:
     return new_x
 
 
-def ndim_zero_ket(n_qubits: int) -> list[int]:
+def ndim_zero_ket(n_qubits: int) -> tuple[Number]:
     ket = 2**n_qubits * [0]
     ket[0] = 1
     return ket
@@ -73,15 +74,6 @@ def is_square(array):
             return False
     
     return len(array) > 0
-
-
-def _copy_array(a):
-    new_a = deepcopy(a)
-    try:
-        new_a = new_a.tolist()
-    except:
-        pass
-    return new_a
 
 
 def closest(val, items, tolerance=1e-15):
@@ -105,9 +97,8 @@ def closest(val, items, tolerance=1e-15):
         if d2 < gap:
             gap = d2
             best_val = item
-    #print(f"Smallest gap is {gap}")
+
     if best_val is None:
         msg = f"Could not find match for {val} within tolerance {tolerance}"
         raise ValueError(msg)
     return best_val
-
