@@ -45,7 +45,8 @@ class StateVector(object):
     @classmethod
     def _normalize(cls, array):
         # need to make sure array norms to 1
-        norm = math.sqrt(sum([x * np.conj(x) for x in array]))
+        #norm = math.sqrt(sum([x * np.conj(x) for x in array]))
+        norm = math.sqrt(sum([np.abs(x)**2 for x in array]))
         if norm != 1:
             normed_array = [x / norm for x in array]
         else:
