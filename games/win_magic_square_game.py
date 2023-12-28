@@ -59,6 +59,7 @@ for alice_input, bob_input in itertools.product(arange, brange):
 
     #print(scores)
     print(sum(scores))
-exit()
+
+sys.exit()
 
 
