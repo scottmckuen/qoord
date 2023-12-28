@@ -506,7 +506,8 @@ class DensityMatrix(MatrixOperator):
 def rearrange_vector(tensor_permutation: dict, state_vector: list | tuple, size=None):
     if not size:
         size = len(state_vector).bit_length() - 1
-        # this will probably be wrong if the vector is not 2^n length
+        # this will probably be wrong if the vector is not 2^n length,
+        # but it doesn't matter here because we're working on quantum states
 
     new_state = list(state_vector)
 
@@ -530,7 +531,17 @@ def rearrange_matrix(tensor_permutation: dict, matrix: MatrixArray):
     return new_matrix
 
 
-def permute_to_end(move_these: list, total_set: list):
+def permute_to_end(move_these: list, total_set: list) -> dict:
+    """
+    Given a sublist of qubit labels, pop and move to the end of the list.
+    These are values, not indices, so we match on the value to find
+    which index to pop.  That lets us work with qubits accessed by
+    addresses or names more complex than a list-position.
+
+    @param move_these:  qubit labels to move to end
+    @param total_set:   all the qubit labels as a unique list
+    @return: a permutation dictionary
+    """
     if not isinstance(total_set, list):
         total_set = list(total_set)
     for q_val in move_these:
@@ -543,16 +554,24 @@ def permute_to_end(move_these: list, total_set: list):
 
 
 def invert_permutation(permutation: dict) -> dict:
+    """
+    Reverse a permutation dictionary.  The permutation dictionary
+    acts on a list by manipulating its indices.
+    @param permutation: a dictionary of from-index: to-index
+    @return:
+    """
     new_perm = {v: k for k, v in permutation.items()}
     return new_perm
 
 
 def numeric_list_to_permutation(a_list: list) -> dict:
     """
-    This forgets the numbers in the list and just builds a map from
-    their current index in a_list and
-    @param a_list:
-    @return:
+    Take a numeric list and convert it to a permutation dictionary.
+    For each value, map its current index to the index it would have
+    in a sorted version of the list.
+
+    @param a_list: unique list of numeric (or o/w sortable) values
+    @return: a permutation dictionary that would sort the list
     """
     sorted_list = sorted(a_list)
     reverse_map = {}

@@ -12,7 +12,7 @@ from .qubits import Qubit
 from .devices import Device
 
 
-def test_support_binary():
+def test_shuffle_binary_indices():
     shuffle = {3: 5, 5: 3}
     original = 1000
     expected = 952
@@ -24,6 +24,7 @@ def test_support_binary():
     expected = 489
     actual = update_index(original, shuffle, 2)
     assert actual == expected
+
 
 def test_setup():
     device = Device(qubits=1)
@@ -127,9 +128,9 @@ def test_is_unitary_validation():
     """ Does UnitaryGate check for unitary input?"""
     try:
         foo = ((1, 0), (0, 2))  # not unitary, deliberately
-        u = UnitaryGate(foo)
+        _ = UnitaryGate(foo)
         assert False
-    except:
+    except ValueError:
         assert True
 
 
@@ -262,6 +263,8 @@ def test_new_state():
         expected_state = (1, 0)
     elif actual == -1:
         expected_state = (0, 1)
+    else:
+        assert False  # should not happen
 
     actual_state = states[vals.tolist().index(actual)]
     actual_state = tuple(actual_state.tolist())
@@ -408,7 +411,7 @@ def test_bell_state_partial_trace():
     qubit = device.get_qubit(0)
     state = qubit.get_state(force_density_matrix=True)
 
-    #  this is the thing we partial trace on:  trace out Bob / qubit1
+    #  this is the thing we partial-trace on:  trace out Bob / qubit1
     alice_state = state.partial_trace(keep_qubits=[0])
 
     ket0 = StateVector((1, 0))
@@ -523,4 +526,3 @@ def test_mo_distribution():
     projectors, probabilities = op.distribution(state)
     print(probabilities)
     assert all([math.isclose(p, 0.5) for p in probabilities.values()])
-

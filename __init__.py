@@ -8,4 +8,3 @@ from .core_operators import *
 from .gates import *
 from .devices import Device
 from .qubits import *
-
