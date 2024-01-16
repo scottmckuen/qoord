@@ -23,27 +23,30 @@ and (very secondarily) to prototype quantum algorithms.
 
 ### Notes and caveats
 Qoord is a very simple simulator, 
-designed to be easy to understand and hack on.  It's not designed for speed or scale, 
-which are challenging problems for a quantum simulator (because of the exponential 
-growth in the size of the quantum state vector as the number of qubits increases.) 
-Since quantum computation in Qoord involves repeated matrix multiplications, the 
-accuracy will be limited by the standard floating point precision of Python and 
-numpy - we currently don't take any measures to correct for this.
+designed to be easy to understand and hack on.  It's not designed for speed 
+or scale, which are challenging problems for a quantum simulator (because 
+of the exponential growth in the size of the quantum state vector as the 
+number of qubits increases.)  Since quantum computation in Qoord involves 
+repeated matrix multiplications, the accuracy will be limited by the standard
+floating point precision of Python and numpy - we currently don't take any 
+measures to correct for this.
 
 
 ## Design
-The base layer represents and manipulates quantum states using complex-number vectors.  
-Each quantum state is a vector of length $2^n$, where $n$ is the number of qubits in the system.  To change a quantum state, 
-we apply matrix operators through multiplication.  These operators are always either
-_unitary_ (representing quantum gates) or _projections_ (representing measurements).
-You need to apply measurements to extract information from a quantum state.
+### Core: states and operators
+The base layer represents and manipulates program states using vectors of 
+complex numbers.  Each state is a vector of length $2^n$, where 
+$n$ is the number of qubits in the system.  To change the program's state, we 
+multiply the vector by a matrix operator.  These operators are always 
+either _unitary_ (representing quantum gates) or _projections_ (representing 
+measurements).  You need to apply unitary matrices to change the state of 
+the qubits, and use projection matrices to read the value of a qubit.
 
 The core of the library is the `StateVector` class, which represents a 
 quantum state as a vector of complex numbers.  The `StateVector` class 
-is immutable, and all operations on it return a new `StateVector` instance.  
-This makes it easy to reason about the state of a quantum system at any point 
-in a circuit.
+is immutable, and all operations on it return a new `StateVector` instance. 
 
+### Quantum gates
 
 ## Usage
 
