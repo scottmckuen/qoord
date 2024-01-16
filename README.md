@@ -7,13 +7,19 @@ Should only require Numpy to get started.
 ## Overview
 Most quantum computing efforts are focused on "gate-based" quantum computers,
 which are built from a network of quantum logic gates operating on _qubits_ 
-(quantum bits).  These gates are quantum analogs of the logic gates (AND, OR, NOT) used in 
-classical computers to manipulate the binary-valued bits.  Each
-program is written as a sequence of quantum gates, which are applied to the qubits.
-A quantum circuit simulator is a program to simulate the behaviour 
-of a gate-based quantum computer.  Qoord is a quantum circuit simulator, written 
-to teach myself about quantum computing, and (very secondarily) to prototype quantum 
-algorithms.  
+(quantum bits).  In ordinary computers the deepest level of programming, directly
+on the chip, uses logic gates (AND, OR, NOT) to manipulate binary bits.  Quantum
+computers also use logical operations, but because qubits have a more complex behavior 
+than binary logic, the quantum logic gates are very different.
+
+Each quantum program is written as a sequence of quantum gates, which are applied 
+to the qubits.  Because quantum programs are still low-level and operate directly on
+the hardware, they are often called _quantum circuits_.  A quantum circuit simulator 
+is a program to simulate the behaviour of a gate-based quantum computer, as a substitute
+for having actual hardware.  
+
+Qoord is a quantum circuit simulator, written to teach myself about quantum computing, 
+and (very secondarily) to prototype quantum algorithms.  
 
 ### Notes and caveats
 Qoord is a very simple simulator, 
