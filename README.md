@@ -5,21 +5,21 @@ networking and computing.
 Should only require Numpy to get started.
 
 ## Overview
-Most quantum computing efforts are focused on "gate-based" quantum computers,
-which are built from a network of quantum logic gates operating on _qubits_ 
-(quantum bits).  In ordinary computers the deepest level of programming, directly
-on the chip, uses logic gates (AND, OR, NOT) to manipulate binary bits.  Quantum
-computers also use logical operations, but because qubits have a more complex behavior 
-than binary logic, the quantum logic gates are very different.
+Qoord is a quantum circuit simulator, written to teach myself about quantum 
+computing, and (very secondarily) to prototype quantum algorithms.  
+
+In ordinary computers the deepest level of programming, directly on the chip, 
+uses logic gates (AND, OR, NOT) to manipulate binary bits.  Most quantum 
+computing efforts are focused on "gate-based" computing, which are built from 
+a network of quantum logic gates operating on _qubits_ (quantum bits).  Quantum
+computers also use logical operations, but because qubits have a more complex 
+behavior than binary logic, the quantum logic gates are very different.
 
 Each quantum program is written as a sequence of quantum gates, which are applied 
 to the qubits.  Because quantum programs are still low-level and operate directly on
 the hardware, they are often called _quantum circuits_.  A quantum circuit simulator 
 is a program to simulate the behaviour of a gate-based quantum computer, as a substitute
 for having actual hardware.  
-
-Qoord is a quantum circuit simulator, written to teach myself about quantum computing, 
-and (very secondarily) to prototype quantum algorithms.  
 
 ### Notes and caveats
 Qoord is a very simple simulator, 
@@ -35,18 +35,24 @@ measures to correct for this.
 ## Design
 ### Core: states and operators
 The base layer represents and manipulates program states using vectors of 
-complex numbers.  Each state is a vector of length $2^n$, where 
-$n$ is the number of qubits in the system.  To change the program's state, we 
-multiply the vector by a matrix operator.  These operators are always 
-either _unitary_ (representing quantum gates) or _projections_ (representing 
-measurements).  You need to apply unitary matrices to change the state of 
-the qubits, and use projection matrices to read the value of a qubit.
+complex numbers, in the `StateVector` class.  Each state is a vector of 
+length $2^n$, where $n$ is the number of qubits in the system.  To change 
+the program's state, we multiply the vector by a matrix operator.  These 
+operators are always either _unitary_ (representing quantum gates) or 
+_projections_ (representing measurements).  You need to apply unitary 
+matrices to change the state of the qubits, and use projection matrices to 
+read the value of a qubit.
 
-The core of the library is the `StateVector` class, which represents a 
-quantum state as a vector of complex numbers.  The `StateVector` class 
-is immutable, and all operations on it return a new `StateVector` instance. 
+This layer is primarily implementing mathematical operations.  It doesn't 
+know anything about the meaning of the operations, or the physical 
+implementation of the gates.  The `StateVector` class is immutable, and 
+all operations on it return a new `StateVector` instance.  Operators are 
+represented by the `MatrixOperator` class. States can also be represented 
+as a `DensityMatrix`, a matrix of complex numbers that captures a somewhat 
+broader set of possibilities where the quantum state is only partially known.
 
-### Quantum gates
+### Quantum states and gates
+
 
 ## Usage
 
