@@ -15,6 +15,10 @@ class Device(object):
     An n-qubit device defaults to an initial state of |0>^n.
     """
     def __init__(self, qubits: int | list[str]):
+        """
+        Initialize a device with a number of qubits.
+        @param qubits: number of qubits, or list of qubit labels
+        """
         # assign unique identifiers to the qubits
         if isinstance(qubits, int):
             self._num_qubits = qubits
@@ -63,6 +67,7 @@ class Device(object):
         return results
 
     def make_bell_pair(self, qubits):
+        assert len(qubits) == 2
         q1, q2 = self.get_qubits(qubits)
         Hadamard(q1)  # create superposition
         CNOT(q1, q2)  # entangle first shared pair
