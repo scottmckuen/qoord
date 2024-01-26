@@ -71,11 +71,10 @@ but is a critical part of the quantum behavior.  Here's how we handle it:
 
 When constructing a quantum system, we first fix the number of qubits $n$ 
 and initialize a `StateVector` to the ${\left|0\right\rangle}^n$ state.  
-This `StateVector`
-is used to set up a `QuantumState` instance.  Then we create $n$ 
-`Qubit` instances, passing the `QuantumState` to each constructor so the
-state is shared by all the qubits.  This reference is immutable, so qubits 
-cannot lose their connection to the global state object.  However, 
+This `StateVector`is used to set up a `QuantumState` instance.  Then we 
+create $n$ `Qubit` instances, passing the `QuantumState` to each constructor 
+so the state is shared by all the qubits.  This reference is immutable, so 
+qubits cannot lose their connection to the global state object.  However, 
 because the `QuantumState` class has mutable internal state, gates and
 measurements on a `Qubit` can change the global state of the system, 
 and all the qubits still share access to the changed state.
