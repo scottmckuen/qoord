@@ -70,7 +70,8 @@ which violates the normal object/state encapsulation you want in software,
 but is a critical part of the quantum behavior.  Here's how we handle it:
 
 When constructing a quantum system, we first fix the number of qubits $n$ 
-and initialize a `StateVector` to the $|0>^n$ state.  This `StateVector`
+and initialize a `StateVector` to the ${\left|0\right\rangle}^n$ state.  
+This `StateVector`
 is used to set up a `QuantumState` instance.  Then we create $n$ 
 `Qubit` instances, passing the `QuantumState` to each constructor so the
 state is shared by all the qubits.  This reference is immutable, so qubits 
