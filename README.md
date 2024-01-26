@@ -8,7 +8,7 @@ Should only require Numpy to get started.
 Qoord is a quantum circuit simulator, written to teach myself about quantum 
 computing, and (very secondarily) to prototype quantum algorithms.  
 
-In ordinary computers, the deepest level of programming, directly on the chip, 
+In ordinary computers, the deepest level of programming (directly on the chip) 
 uses logic gates (AND, OR, NOT) to manipulate binary bits.  Most quantum 
 computing efforts are also focused on this kind of "gate-based" computing -
 devices are built from quantum bits or _qubits_.  Quantum computers also use 
@@ -34,10 +34,10 @@ Python and numpy - we currently don't take any measures to correct for this.
 ## Design
 ### Core: states and operators
 The base layer represents and manipulates program states using vectors of 
-complex numbers, in the `StateVector` class.  Each state is a vector of 
-length $2^n$, where $n$ is the number of qubits in the system.  This layer 
-is primarily implementing mathematical operations.  It doesn't know anything 
-about the physical interpretation as quantum states and gates.
+complex numbers, in the `StateVector` class.  Each state is a complex-valued
+vector of length $2^n$, where $n$ is the number of qubits in the system.  
+This layer is primarily implementing mathematical operations.  It doesn't 
+know anything about the physical interpretation as quantum states and gates.
 
 The `StateVector` class is immutable, and all operations on it return a 
 new `StateVector` instance.  States can also be represented as a 
@@ -56,6 +56,40 @@ by reading the value of a qubit.  Operators are represented by the
 
 ### Quantum states and gates
 
+The `QuantumState` class represents the joint quantum state of a collection
+of qubits.  `QuantumState` contains a collection of qubit identifiers and 
+either a `StateVector` or a `DensityMatrix` instance to represent the numeric
+values of the state.
+
+When working with multiple qubits, the global state of the system can't be
+broken down into a simple combination of the individual qubit states.  If
+Alice and Bob's qubits are _entangled_, when Alice acts on her qubit,
+the global state of the system changes in a way that matters for Bob's qubit.
+This means that the references to the state are shared by multiple objects,
+which violates the normal object/state encapsulation you want in software,
+but is a critical part of the quantum behavior.  Here's how we handle it:
+
+When constructing a quantum system, we first fix the number of qubits $n$ 
+and initialize a `StateVector` to the $|0>^n$ state.  This `StateVector`
+is used to set up a `QuantumState` instance.  Then we create $n$ 
+`Qubit` instances, passing the `QuantumState` to each constructor so the
+state is shared by all the qubits.  This reference is immutable, so qubits 
+cannot lose their connection to the global state object.  However, 
+because the `QuantumState` class has mutable internal state, gates and
+measurements on a `Qubit` can change the global state of the system, 
+and all the qubits still share access to the changed state.
+
+``` 
+StateVector | DensityMatrix  - immutable wrapper around a numpy array 
+                or numeric list.  Fundamental operations are just math.
+
+QuantumState - mutable container for a state vector or density matrix, 
+               with a list of associated qubit identifiers.
+
+Qubit, QubitSet - immutable identifier for one or more of the qubits in 
+                a quantum system
+
+```
 
 
 ## Usage
