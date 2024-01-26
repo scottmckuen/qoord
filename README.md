@@ -70,8 +70,8 @@ which violates the normal object/state encapsulation you want in software,
 but is a critical part of the quantum behavior.  Here's how we handle it:
 
 When constructing a quantum system, we first fix the number of qubits $n$ 
-and initialize a `StateVector` to the ${\left|0\right\rangle}^n$ state.  
-This `StateVector`is used to set up a `QuantumState` instance.  Then we 
+and initialize a `StateVector` to the ${\left|0\right\rangle}^n$ state.  The
+`StateVector`is used to set up a `QuantumState` instance.  Then we 
 create $n$ `Qubit` instances, passing the `QuantumState` to each constructor 
 so the state is shared by all the qubits.  This reference is immutable, so 
 qubits cannot lose their connection to the global state object.  However, 
@@ -87,7 +87,8 @@ QuantumState - mutable container for a state vector or density matrix,
                with a list of associated qubit identifiers.
 
 Qubit, QubitSet - immutable identifier for one or more of the qubits in 
-                a quantum system
+                a quantum system, with an immutable reference to the
+                QuantumState object.
 
 ```
 
