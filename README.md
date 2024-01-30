@@ -33,6 +33,13 @@ multiplications, the accuracy will be limited by the standard floating point
 precision of Python and numpy - we currently don't take any measures to 
 correct for this.
 
+#### Pronunciation
+Qoord is pronounced like "coordinate".  If you say it like "cord" or 
+"qword", you're likely to get away with it.   My whole family are writers,
+but I've mostly fought off the temptation to spell it "qoörd" with a 
+[diaeresis](https://www.newyorker.com/culture/culture-desk/the-curse-of-the-diaeresis).
+Although...the two dots do look a bit entangled, so maybe I'll rethink it.
+
 
 ## Design
 ### Core: states and operators
