@@ -143,10 +143,20 @@ print(sv_plus)
 # StateVector([0.70710678+0.j, 0.70710678+0.j])
 ```
 
-```
 
-### Create a Bell pair
-```
+### Create a Bell pair on two qubits
+```python
 
+device = Device(qubits=2)
+device.make_bell_pair(qubits=[0, 1])
+
+qubit = device.get_qubit(0)
+state = qubit.get_state(force_density_matrix=True)
+
+#  Use partial trace to reduce to look at just the first qubit
+qb0_state = state.partial_trace(keep_qubits=[0])
+print(qb0_state)  
+# this is a density matrix, not a state vector,because of the 
+# partial trace operation
 
 ```
