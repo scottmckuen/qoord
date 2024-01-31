@@ -19,9 +19,11 @@ different.
 Each quantum program is written as a sequence of quantum gates, which are 
 applied to the qubits.  Because quantum programs are still low-level and 
 operate directly on the hardware, they are often called _quantum 
-circuits_.  A quantum circuit simulator is a program to simulate the 
-behavior of a gate-based quantum computer, as a substitute for having actual
-hardware.  
+circuits_.  Most of us do not have an ion-trap or a near-absolute-zero
+refrigerator hanging around to build quantum systems with, but we can mimic 
+these with software.  A quantum circuit simulator is a program to simulate 
+the behavior of a gate-based quantum computer, as a substitute for having 
+actual quantum hardware.  
 
 ### Notes and caveats
 Qoord is a very simple simulator, designed to be easy to understand and 
