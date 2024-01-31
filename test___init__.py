@@ -113,12 +113,12 @@ def test_superposition():
 
 def test_cnot():
     device = Device(qubits=2)
-    device.initialize(StateVector((0, 0, 1, 0)))
+    device.initialize(StateVector((0, 0, 1, 0)))  # |10>
 
     qubits = device.get_qubits([0, 1])
     CNOT(qubits)
 
-    expected = StateVector((0, 0, 0, 1))
+    expected = StateVector((0, 0, 0, 1))  # |11>
     actual = device.get_state()
 
     assert close_enough(actual.to_array(), expected.to_array())
