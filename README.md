@@ -108,7 +108,7 @@ Users typically will initialize a `Device` instance with some number of
 quantum bits.  The Device is a container and initializer for the shared 
 `QuantumState`.
 
-``` 
+```python
     device = Device(qubits=2)
     device.initialize(StateVector((0, 0, 1, 0)))  # |10>
 
@@ -117,6 +117,12 @@ quantum bits.  The Device is a container and initializer for the shared
 
     expected = StateVector((0, 0, 0, 1))  # |11>
     actual = device.get_state()
+    
+    print(expected)
+    print(actual)
+
+    # (0, 0, 0, 1)
+    # (0, 0, 0, 1)
 ```
 
 ## Usage
