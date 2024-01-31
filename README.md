@@ -67,18 +67,24 @@ by reading the value of a qubit.  Operators are represented by the
 
 ### Mantle: Quantum States and Gates
 
-The `QuantumState` class represents the joint quantum state of a collection
-of qubits.  `QuantumState` contains a collection of qubit identifiers and 
-either a `StateVector` or a `DensityMatrix` instance to represent the numeric
-values of the state.
+The `QuantumState` class represents the joint state of a set of 
+qubits.  `QuantumState` contains a collection of qubit identifiers and 
+either a `StateVector` or a `DensityMatrix` instance to represent the 
+numeric values of the state.
 
 When working with multiple qubits, the global state of the system can't be
 broken down into a simple combination of the individual qubit states.  If
-Alice and Bob's qubits are _entangled_, when Alice acts on her qubit,
-the global state of the system changes in a way that matters for Bob's qubit.
-This means that the references to the state are shared by multiple objects,
-which violates the normal object/state encapsulation you want in software,
-but is a critical part of the quantum behavior.  Here's how we handle it:
+Alice and Bob's qubits are _entangled_, when Alice manipulates her qubit,
+the global state of the system changes in a way that matters for Bob's qubit,
+even if they are separated by a large distance and can't otherwise
+interact.  This means that multiple distinct objects need to keep references 
+to the global `QuantumState`; this violates the normal object/state 
+encapsulation you want in software, but is a critical part of the quantum 
+behavior.  We handle this by making all _references_ to the global 
+`QuantumState` immutable, but the `QuantumState` itself is a mutable object
+whose value is maintained by either a `StateVector` or a `DensityMatrix`.  All 
+changes in the system involve updating the internal values of the shared
+`QuantumState` object.
 
 When constructing a quantum system, we first fix the number of qubits $n$ 
 and initialize a `StateVector` to the ${\left|0\right\rangle}^n$ state.  The
