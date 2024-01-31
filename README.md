@@ -42,7 +42,7 @@ Although...the two dots do look a bit entangled, so maybe I'll rethink it.
 
 
 ## Design
-### Core: states and operators
+### Core: State Vectors and Matrix Operators
 The base layer represents and manipulates program states using vectors of 
 complex numbers, in the `StateVector` class.  Each state is a complex-valued
 vector of length $2^n$, where $n$ is the number of qubits in the 
@@ -65,7 +65,7 @@ a calculation; you use projection matrices to extract data from the program
 by reading the value of a qubit.  Operators are represented by the 
 `MatrixOperator` class.
 
-### Quantum states and gates
+### Mantle: Quantum States and Gates
 
 The `QuantumState` class represents the joint quantum state of a collection
 of qubits.  `QuantumState` contains a collection of qubit identifiers and 
@@ -103,6 +103,21 @@ Qubit, QubitSet - immutable identifier for one or more of the qubits in
 
 ```
 
+### Crust: Devices and Circuits
+Users typically will initialize a `Device` instance with some number of
+quantum bits.  The Device is a container and initializer for the shared 
+`QuantumState`.
+
+``` 
+    device = Device(qubits=2)
+    device.initialize(StateVector((0, 0, 1, 0)))  # |10>
+
+    qubits = device.get_qubits([0, 1])
+    CNOT(qubits)
+
+    expected = StateVector((0, 0, 0, 1))  # |11>
+    actual = device.get_state()
+```
 
 ## Usage
 
