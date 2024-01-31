@@ -90,7 +90,7 @@ changes in the system involve updating the internal values of the shared
 
 When constructing a quantum system, we first fix the number of qubits $n$ 
 and initialize a `StateVector` to the ${\left|0\right\rangle}^n$ state.  The
-`StateVector`is used to set up a `QuantumState` instance.  Then we 
+`StateVector` is used to set up a `QuantumState` instance.  Then we 
 create $n$ `Qubit` instances, passing the `QuantumState` to each constructor 
 so the state is shared by all the qubits.  This reference is immutable, so 
 qubits cannot lose their connection to the global state object.  However, 
