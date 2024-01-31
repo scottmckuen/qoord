@@ -414,8 +414,8 @@ def test_bell_state_partial_trace():
     #  this is the thing we partial-trace on:  trace out Bob / qubit1
     alice_state = state.partial_trace(keep_qubits=[0])
 
-    ket0 = StateVector((1, 0))
-    ket1 = StateVector((0, 1))
+    ket0 = StateVector.ZERO
+    ket1 = StateVector.ONE
 
     expected = (ket0.to_density_matrix() + ket1.to_density_matrix())
     expected = expected.scale(0.5)
