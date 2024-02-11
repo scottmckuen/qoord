@@ -21,11 +21,11 @@ different.
 Each quantum program is written as a sequence of quantum gates, which are 
 applied to the qubits.  Because quantum programs are still low-level and 
 operate directly on the hardware, they are often called _quantum 
-circuits_.  Most of us do not have an ion-trap or a near-absolute-zero
+circuits_.  Most of us do not have an ion trap or a near-absolute-zero
 refrigerator hanging around to build quantum systems with, but we can mimic 
-these with software.  A quantum circuit simulator is a program to simulate 
-the behavior of a gate-based quantum computer, as a substitute for having 
-actual quantum hardware.  
+quantum computers in software:  a quantum circuit simulator is a program to 
+simulate the behavior of a idealized gate-based quantum computer, as a substitute for 
+having actual quantum hardware.  That's what Qoord does.
 
 ### Notes and caveats
 Qoord is a very simple simulator, designed to be easy to understand and 
@@ -39,10 +39,10 @@ correct for this.
 
 #### Pronunciation
 Qoord is pronounced like "coordinate".  If you say it like "cord" or 
-"qword", you're likely to get away with it.   My whole family are writers,
+"qword", I probably won't notice.   My whole family are writers,
 but I've mostly fought off the temptation to spell it "qoörd" with a 
-[diaeresis](https://www.newyorker.com/culture/culture-desk/the-curse-of-the-diaeresis).
-Although...the two dots do look a bit entangled, so maybe I'll rethink it.
+[diaeresis](https://www.newyorker.com/culture/culture-desk/the-curse-of-the-diaeresis).  Although...
+the two dots do look a bit entangled, so maybe I'll rethink it.
 
 
 ## Design
