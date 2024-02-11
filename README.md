@@ -2,7 +2,13 @@
 Tiny, rough-and-ready quantum circuit simulator for exploring quantum 
 networking and computing.
 
-Should only require Numpy to get started.
+Should only require [Numpy](https://numpy.org) to get started.  Tests in
+`test__init__.py` can be run using the 
+[`pytest`](https://docs.pytest.org/en/8.0.x/) framework from PyPy.
+
+
+
+```python
 
 ## Overview
 Qoord is a quantum circuit simulator, written to teach myself about quantum 
