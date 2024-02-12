@@ -4,11 +4,11 @@ networking and computing.
 
 Should only require [Numpy](https://numpy.org) to get started.  Tests in
 `test__init__.py` can be run using the 
-[`pytest`](https://docs.pytest.org/en/8.0.x/) framework from PyPy.
+[`pytest`](https://docs.pytest.org/en/8.0.x/) framework from PyPy.  Python 3.10 or higher recommended.
 
 ## Overview
 Qoord is a quantum circuit simulator, written to teach myself about quantum 
-computing, and (very secondarily) to prototype quantum algorithms.  
+computing, and (secondarily) to prototype quantum algorithms.  
 
 In ordinary computers, the deepest level of programming (directly on the 
 chip) uses logic gates (AND, OR, NOT) to manipulate binary bits.  Most 
@@ -30,9 +30,9 @@ having actual quantum hardware.  That's what Qoord does.
 ### Notes and caveats
 Qoord is a very simple simulator, designed to be easy to understand and 
 hack on.  It's not designed for speed or scale, which are challenging 
-problems for a quantum simulator (because of the exponential growth in 
+problems for a quantum simulator because of the exponential growth in 
 the size of the quantum state vector as the number of qubits 
-increases.) Since quantum computation in Qoord involves repeated matrix 
+increases.  Since quantum computation in Qoord involves repeated matrix 
 multiplications, the accuracy will be limited by the standard floating point 
 precision of Python and numpy - we currently don't take any measures to 
 correct for this.
@@ -100,18 +100,13 @@ because the `QuantumState` class has mutable internal state, gates and
 measurements on a `Qubit` can change the global state of the system, 
 and all the qubits still share access to the changed state.
 
-``` 
-StateVector | DensityMatrix  - immutable wrapper around a numpy array 
-                or numeric list.  Fundamental operations are just math.
+| Object | Description |
+|---|---|
+| StateVector, DensityMatrix  | immutable wrapper around a numpy array  or numeric list.  Fundamental operations are just math. |
+| QuantumState | mutable container for a state vector or density matrix, with a list of associated qubit identifiers. |
+|Qubit, QubitSet | immutable identifier for one or more of the qubits in a quantum system, with an immutable reference to the QuantumState object. |
 
-QuantumState - mutable container for a state vector or density matrix, 
-               with a list of associated qubit identifiers.
 
-Qubit, QubitSet - immutable identifier for one or more of the qubits in 
-                a quantum system, with an immutable reference to the
-                QuantumState object.
-
-```
 
 ### Crust: Devices and Circuits
 Users typically will initialize a `Device` instance with some number of
@@ -156,7 +151,6 @@ print(sv_plus)
 
 ### Create a Bell pair on two qubits
 ```python
-
 device = Device(qubits=2)
 device.make_bell_pair(qubits=[0, 1])
 
