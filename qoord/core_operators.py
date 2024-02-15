@@ -1,7 +1,7 @@
 import math
 
-from .__support__ import eipn
-from .states import MatrixOperator
+from qoord.__support__ import eipn
+from qoord.states import MatrixOperator
 
 pauli_x = MatrixOperator(((0, 1),
                           (1, 0)))

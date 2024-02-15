@@ -1,7 +1,7 @@
 from copy import deepcopy
 
-from .__support__ import closest
-from .states import MatrixOperator, QuantumState
+from qoord.__support__ import closest
+from qoord.states import MatrixOperator, QuantumState
 
 
 class Qubit(object):

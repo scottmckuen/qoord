@@ -1,6 +1,6 @@
-from .states import identity_op
-from .gates import UnitaryGate
-from .core_operators import *
+from qoord.states import identity_op
+from qoord.gates import UnitaryGate
+from qoord.core_operators import *
 
 Identity = UnitaryGate(identity_op, 'I')
 PauliX = UnitaryGate(pauli_x, 'X')

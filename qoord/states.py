@@ -8,7 +8,7 @@ import numpy as np
 from numbers import Number
 from typing import TypeAlias, TypeVar
 
-from .__support__ import ndim_zero_ket, update_index, tupleize
+from qoord.__support__ import ndim_zero_ket, update_index, tupleize
 
 # row and column vectors are both supported
 RowVector: TypeAlias = tuple[Number, ...]

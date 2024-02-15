@@ -2,14 +2,14 @@ import math
 
 import numpy as np
 
-from .__support__ import close_enough, update_index, tupleize
-from .states import StateVector, DensityMatrix, MatrixOperator, QuantumState, \
+from qoord.__support__ import close_enough, update_index, tupleize
+from qoord.states import StateVector, DensityMatrix, MatrixOperator, QuantumState, \
     identity_op, permute_to_end, numeric_list_to_permutation
-from .core_operators import hadamard_op, cnot_op, pauli_z, pauli_x, phase_op
-from .gates import UnitaryGate
-from .core_gates import Hadamard, CNOT, PauliX, PauliZ as Z, Identity as I
-from .qubits import Qubit
-from .devices import Device
+from qoord.core_operators import hadamard_op, cnot_op, pauli_z, pauli_x, phase_op
+from qoord.gates import UnitaryGate
+from qoord.core_gates import Hadamard, CNOT, PauliX, PauliZ as Z, Identity as I
+from qoord.qubits import Qubit
+from qoord.devices import Device
 
 
 def test_shuffle_binary_indices():

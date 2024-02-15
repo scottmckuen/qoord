@@ -1,7 +1,7 @@
 from typing import TypeVar
 
-from .states import MatrixArray, MatrixOperator
-from .qubits import Qubit, QubitSet
+from qoord.states import MatrixArray, MatrixOperator
+from qoord.qubits import Qubit, QubitSet
 
 TmpUG = TypeVar("TmpUG", bound="UnitaryGate")
 
