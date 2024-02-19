@@ -24,8 +24,45 @@ operate directly on the hardware, they are often called _quantum
 circuits_.  Most of us do not have an ion trap or a near-absolute-zero
 refrigerator hanging around to build quantum systems with, but we can mimic 
 quantum computers in software:  a quantum circuit simulator is a program to 
-simulate the behavior of a idealized gate-based quantum computer, as a substitute for 
-having actual quantum hardware.  That's what Qoord does.
+simulate the behavior of a idealized gate-based quantum computer, as a 
+substitute for having actual quantum hardware.  That's what Qoord does.
+
+### Background Material
+Getting comfortable with the $<bra|$ - $|ket>$ notation makes a big 
+difference; they're two types of vectors.  The kets $|x>$ are basically 
+vector-valued data, and the bras $<y|$ are vectors of the coefficients 
+of linear functions.  $<y|x>$ is then just a dot-product, e.g. applying 
+the linear model to the data to get a scalar answer.  In quantum circuits, 
+the ket vectors are always the current state of the quantum register, and 
+the various gate operations are multiplying the state by a matrix.  
+
+There are a few stumbling blocks related to what kind of data a qubit value 
+provides - a single qubit stores a 2-dimensional complex-valued vector of 
+length 1.  That's way more data than a classical bit, but you can only 
+extract one classical bit per measurement and all the rest of the qubit 
+information is destroyed in the process.
+
+I strongly recommend https://www.scottaaronson.com/qclec.pdf - Scott 
+Aaronson's lecture notes for the first semester of quantum information 
+theory.  The beginning parts are good for understanding what a qubit is 
+and what a gate is doing.  Later he goes into algorithms and nonlocal
+games, which are incredibly cool.  
+
+There's also https://quantum.country, which
+is introductory material in circuit-model quantum computing, by Nielsen 
+and Matusek.  Nielsen also co-wrote "Mike and Ike", the standard intro to 
+quantum computing / quantum information textbook.  The Quantum Country 
+site is part of his work on finding alternative ways to teach deep topics.
+
+Generally, it helped me a lot to use multiple sets of lecture notes online 
+to get several perspectives on the same material.  One point that gets
+glossed over:  when considering a gate acting on a qubit, you often
+need to know the matrix that operates on the entire state vector, not just
+the one qubit that the gate is acting on.  When this happens, you are 
+taking tensor products of matrices; the 2x2 identity matrix is used on the 
+other qubits.  This probably isn't at all obvious if you're not used to 
+working with tensor products and linear maps, especially coming from a 
+software background.
 
 ### Notes and caveats
 Qoord is a very simple simulator, designed to be easy to understand and 
@@ -36,6 +73,15 @@ increases.  Since quantum computation in Qoord involves repeated matrix
 multiplications, the accuracy will be limited by the standard floating point 
 precision of Python and numpy - we currently don't take any measures to 
 correct for this.
+
+Many other circuit simulators are available, but I wrote my own to 
+really lock in the basics of the theory.  I've also used Cirq from Google,
+IBM's Qiskit, and PennyLane from Xanadu.  They're all great, and they have
+different strengths.  When I started this project in early 2023, one missing
+feature from a lot of the simulators was the ability to perform mid-circuit
+measurements and then continue the circuit - I made sure Qoord could do 
+that because I needed it for something else.  Good news - in the last year, 
+most of the packages I look at have added this feature.
 
 #### Pronunciation
 Qoord is pronounced like "coordinate".  If you say it like "cord" or 
