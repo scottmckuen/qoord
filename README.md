@@ -31,7 +31,7 @@ substitute for having actual quantum hardware.  That's what Qoord does.
 Getting comfortable with the bra-ket (<| and |>) notation makes a big 
 difference; they're two types of vectors.  The kets |> are basically 
 vector-valued data, and the bras <| are the coefficients of multivariable
-linear functions.  The expression $<y|x>$ is then just a dot-product, 
+linear functions.  The expression <y|x> is then just a dot product, 
 e.g. applying the linear model to the data to get a scalar answer.  
 In quantum circuits, the ket vectors are always the current state of 
 the quantum register, and the various gate operations are multiplying 
