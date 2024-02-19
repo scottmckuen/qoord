@@ -1,9 +1,3 @@
-$$ 
-\newcommand{\bra}[1]{\langle#1|} % Bra
-\newcommand{\ket}[1]{|#1\rangle} % Ket
-\newcommand{\braket}[2]{ \langle #1 | #2 \rangle} %Inner Product
-$$
-
 # qoord
 Tiny, rough-and-ready quantum circuit simulator for exploring quantum 
 networking and computing.
@@ -30,17 +24,18 @@ operate directly on the hardware, they are often called _quantum
 circuits_.  Most of us do not have an ion trap or a near-absolute-zero
 refrigerator hanging around to build quantum systems with, but we can mimic 
 quantum computers in software:  a quantum circuit simulator is a program to 
-simulate the behavior of a idealized gate-based quantum computer, as a 
+simulate the behavior of an idealized gate-based quantum computer, as a 
 substitute for having actual quantum hardware.  That's what Qoord does.
 
 ### Background Material
-Getting comfortable with the $\left\langel bra|$ - $|ket \rangel}$ notation makes a big 
-difference; they're two types of vectors.  The kets $|x \rangel$ are basically 
-vector-valued data, and the bras $\langel y|$ are vectors of the coefficients 
-of linear functions.  $\langel y|x \rangel$ is then just a dot-product, e.g. applying 
-the linear model to the data to get a scalar answer.  In quantum circuits, 
-the ket vectors are always the current state of the quantum register, and 
-the various gate operations are multiplying the state by a matrix.  
+Getting comfortable with the bra-ket (<| and |>) notation makes a big 
+difference; they're two types of vectors.  The kets |> are basically 
+vector-valued data, and the bras <| are the coefficients of multivariable
+linear functions.  The expression $<y|x>$ is then just a dot-product, 
+e.g. applying the linear model to the data to get a scalar answer.  
+In quantum circuits, the ket vectors are always the current state of 
+the quantum register, and the various gate operations are multiplying 
+the state by a matrix.  
 
 There are a few stumbling blocks related to what kind of data a qubit value 
 provides - a single qubit stores a 2-dimensional complex-valued vector of 
