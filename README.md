@@ -28,10 +28,10 @@ simulate the behavior of a idealized gate-based quantum computer, as a
 substitute for having actual quantum hardware.  That's what Qoord does.
 
 ### Background Material
-Getting comfortable with the $<bra|$ - $|ket>$ notation makes a big 
-difference; they're two types of vectors.  The kets $|x>$ are basically 
-vector-valued data, and the bras $<y|$ are vectors of the coefficients 
-of linear functions.  $<y|x>$ is then just a dot-product, e.g. applying 
+Getting comfortable with the $\langel bra|$ - $|ket \rangel$ notation makes a big 
+difference; they're two types of vectors.  The kets $|x \rangel$ are basically 
+vector-valued data, and the bras $\langel y|$ are vectors of the coefficients 
+of linear functions.  $\langel y|x \rangel$ is then just a dot-product, e.g. applying 
 the linear model to the data to get a scalar answer.  In quantum circuits, 
 the ket vectors are always the current state of the quantum register, and 
 the various gate operations are multiplying the state by a matrix.  
