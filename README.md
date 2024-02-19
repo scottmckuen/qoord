@@ -1,3 +1,9 @@
+$$ 
+\newcommand{\bra}[1]{\langle#1|} % Bra
+\newcommand{\ket}[1]{|#1\rangle} % Ket
+\newcommand{\braket}[2]{ \langle #1 | #2 \rangle} %Inner Product
+$$
+
 # qoord
 Tiny, rough-and-ready quantum circuit simulator for exploring quantum 
 networking and computing.
