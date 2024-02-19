@@ -1,10 +1,10 @@
 import cmath
 import math
 
-import numpy as np
-
 from copy import deepcopy
 from numbers import Number
+
+import numpy as np
 
 """
 This is a lowest-level module that can safely be
