@@ -524,5 +524,5 @@ def test_mo_distribution():
     qubit = device.get_qubit(0)
     state = qubit.get_state()
     projectors, probabilities = op.distribution(state)
-    print(probabilities)
+    # print(probabilities)
     assert all([math.isclose(p, 0.5) for p in probabilities.values()])

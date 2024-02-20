@@ -46,6 +46,9 @@ class QubitSet(object):
         self._global_state = q1._quantum_state
         self._state_indexes = [q._state_index for q in qubits]
 
+    def __getitem__(self, item):
+        return Qubit(self._global_state, item)
+
     def apply(self, operator: MatrixOperator) -> None:
         state = self._global_state
         state.apply(operator, self._state_indexes)

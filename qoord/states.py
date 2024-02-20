@@ -9,6 +9,7 @@ from numbers import Number
 from typing import TypeAlias, TypeVar
 
 from qoord.__support__ import ndim_zero_ket, update_index, tupleize
+from qoord.__support__ import close_enough as support_close
 
 # row and column vectors are both supported
 RowVector: TypeAlias = tuple[Number, ...]
@@ -177,6 +178,11 @@ class StateVector(object):
 StateVector.ZERO = StateVector([1, 0])  # the zero ket |0> gives the 0 bit-value
 StateVector.ONE = StateVector([0, 1])  # the one ket |0> gives the 1 bit-value
 
+
+def close_enough(s1: StateVector, s2: StateVector, rel_tol=1e-15):
+    a1 = s1.to_numpy_array()
+    a2 = s2.to_numpy_array()
+    return support_close(a1, a2, rel_tol)
 
 class MatrixOperator(object):
     @classmethod
