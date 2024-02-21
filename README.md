@@ -50,8 +50,8 @@ and what a gate is doing.  Later he goes into algorithms and nonlocal
 games, which are incredibly cool.  
 
 There's also https://quantum.country, which
-is introductory material in circuit-model quantum computing, by Nielsen 
-and Matusek.  Nielsen also co-wrote "Mike and Ike", the standard intro to 
+is introductory material in circuit-model quantum computing, by Michael Nielsen 
+and Andy Matuschak.  Nielsen also co-wrote "Mike and Ike", the standard intro to 
 quantum computing / quantum information textbook.  The Quantum Country 
 site is part of his work on finding alternative ways to teach deep topics.
 
