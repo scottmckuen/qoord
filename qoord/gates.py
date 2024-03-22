@@ -54,3 +54,6 @@ class UnitaryGate:
         op2 = other.to_operator()
         new_op = op1.tensor(op2)
         return UnitaryGate(matrix=new_op, name=f'{self}x{other}')
+
+    def dim(self):
+        return self._matrix.dim()
