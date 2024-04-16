@@ -1,5 +1,5 @@
 # qoord
-Tiny, rough-and-ready quantum circuit simulator for exploring quantum 
+Tiny, rough-and-ready quantum circuit emulator for exploring quantum 
 networking and computing.
 
 Should only require [Numpy](https://numpy.org) to get started.  Tests in
