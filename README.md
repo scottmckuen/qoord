@@ -1,5 +1,5 @@
 # qoord
-Tiny, rough-and-ready quantum circuit simulator for exploring quantum 
+Tiny, rough-and-ready quantum circuit emulator for exploring quantum 
 networking and computing.
 
 Should only require [Numpy](https://numpy.org) to get started.  Tests in
@@ -7,7 +7,7 @@ Should only require [Numpy](https://numpy.org) to get started.  Tests in
 [`pytest`](https://docs.pytest.org/en/8.0.x/) framework from PyPy.  Python 3.10 or higher recommended.
 
 ## Overview
-Qoord is a quantum circuit simulator, written to teach myself about quantum 
+Qoord is a quantum circuit emulator, written to teach myself about quantum 
 computing, and (secondarily) to prototype quantum algorithms.  
 
 In ordinary computers, the deepest level of programming (directly on the 
@@ -23,8 +23,8 @@ applied to the qubits.  Because quantum programs are still low-level and
 operate directly on the hardware, they are often called _quantum 
 circuits_.  Most of us do not have an ion trap or a near-absolute-zero
 refrigerator hanging around to build quantum systems with, but we can mimic 
-quantum computers in software:  a quantum circuit simulator is a program to 
-simulate the behavior of an idealized gate-based quantum computer, as a 
+quantum computers in software:  a quantum circuit emulator is a program to 
+mimic the behavior of an idealized gate-based quantum computer, as a 
 substitute for having actual quantum hardware.  That's what Qoord does.
 
 ### Background Material
@@ -66,23 +66,24 @@ working with tensor products and linear maps, especially coming from a
 software background.
 
 ### Notes and caveats
-Qoord is a very simple simulator, designed to be easy to understand and 
+Qoord is a very simple emulator, designed to be easy to understand and 
 hack on.  It's not designed for speed or scale, which are challenging 
-problems for a quantum simulator because of the exponential growth in 
+problems for a quantum emulator because of the exponential growth in 
 the size of the quantum state vector as the number of qubits 
 increases.  Since quantum computation in Qoord involves repeated matrix 
 multiplications, the accuracy will be limited by the standard floating point 
 precision of Python and numpy - we currently don't take any measures to 
 correct for this.
 
-Many other circuit simulators are available, but I wrote my own to 
+Many other circuit emulators are available, but I wrote my own to 
 really lock in the basics of the theory.  I've also used Cirq from Google,
 IBM's Qiskit, and PennyLane from Xanadu.  They're all great, and they have
 different strengths.  When I started this project in early 2023, one missing
-feature from a lot of the simulators was the ability to perform mid-circuit
-measurements and then continue the circuit - I made sure Qoord could do 
-that because I needed it for something else.  Good news - in the last year, 
-most of the packages I look at have added this feature.
+feature from a lot of the packages out there was an ability to perform mid-circuit
+measurements and then continue the circuit - because most of these were written to
+control actual hardware, and most of the time you just measure at the end. 
+I made sure Qoord could do mid-circuit measurements because I needed it for something 
+else.  Good news - in the last year, most of the packages I look at have added this feature.
 
 #### Pronunciation
 Qoord is pronounced like "coordinate".  If you say it like "cord" or 
