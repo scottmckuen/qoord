@@ -41,13 +41,20 @@ class Qubit(object):
 
 class QubitSet(object):
 
-    def __init__(self, qubits: list[Qubit]):
-        q1 = qubits[0]
-        self._global_state = q1._quantum_state
+    def __init__(self, qubits: list[Qubit], state: QuantumState = None):
+        if len(qubits) == 0:
+            self._global_state = state  # weird, but okay?
+        else:
+            q1 = qubits[0]
+            self._global_state = q1._quantum_state
         self._state_indexes = [q._state_index for q in qubits]
 
     def __getitem__(self, item):
-        return Qubit(self._global_state, item)
+        if isinstance(item, slice):
+            qb_list = [Qubit(self._global_state, idx) for idx in self._state_indexes[item]]
+            return QubitSet(qb_list, self._global_state)
+        else:
+            return Qubit(self._global_state, self._state_indexes[item])
 
     def apply(self, operator: MatrixOperator) -> None:
         state = self._global_state
@@ -60,6 +67,9 @@ class QubitSet(object):
     def __iter__(self):
         for idx in self._state_indexes:
             yield Qubit(self._global_state, idx)
+
+    def __len__(self):
+        return len(self._state_indexes)
 
 
 def binary_from_measurement(observable, qubit):
