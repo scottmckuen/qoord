@@ -3,12 +3,12 @@ import math
 import numpy as np
 
 from qoord.__support__ import close_enough, update_index, tupleize
-from qoord.states import StateVector, DensityMatrix, MatrixOperator, QuantumState, \
+from qoord.states import StateVector, ZERO, ONE, DensityMatrix, MatrixOperator, QuantumState, \
     identity_op, permute_to_end, numeric_list_to_permutation
 from qoord.core_operators import hadamard_op, cnot_op, pauli_z, pauli_x, phase_op
 from qoord.gates import UnitaryGate
 from qoord.core_gates import Hadamard, CNOT, PauliX, PauliZ as Z, Identity as I
-from qoord.qubits import Qubit
+from qoord.qubits import Qubit, QubitSet
 from qoord.devices import Device
 
 
@@ -28,7 +28,10 @@ def test_shuffle_binary_indices():
 
 def test_setup():
     device = Device(qubits=1)
-    qubit = device.get_qubits(0)
+    qbs = device.get_qubits([0])
+    assert qbs is not None
+    assert isinstance(qbs, QubitSet)
+    qubit = device.get_qubit(0)
     assert qubit is not None
     assert isinstance(qubit, Qubit)
     assert isinstance(device.get_state(), StateVector)
@@ -40,11 +43,41 @@ def test_setup():
     assert qubit.get_state()._array is not None
 
 
+def test_setup_two_qubits():
+    device = Device(qubits=2)
+    qbs = device.get_qubits()  # this should get all the qubits
+    assert qbs is not None
+    assert len(qbs) == 2
+
+    q0 = device.get_qubit(0)
+    q1 = device.get_qubit(1)
+    assert q0 is not None
+    assert q1 is not None
+
+
+def test_named_qubits_setup():
+    device = Device(qubits=['alice', 'bob', 'charlie'])
+    qbs = device.get_qubits()
+    assert qbs is not None
+    assert len(qbs) == 3
+
+
+def test_bad_setup():
+    try:
+        device = Device(qubits=[1, 1, 1])
+        assert False, "Should have raised an exception for duplicate qubits!"
+    except ValueError as e:
+        print(e)
+        pass
+    except Exception as e1:
+        print(e1)
+        exit()
+
 def test_two_qubits():
     device = Device(qubits=2)
     device.initialize(StateVector((1, 0, 0, 0)))
 
-    qubit = device.get_qubits(1)
+    qubit = device.get_qubit(1)
     assert isinstance(qubit.get_state(), StateVector)
 
     assert qubit.get_state()._array is not None
@@ -99,7 +132,7 @@ def test_superposition():
 
     init_state = StateVector((1, 0))
     device.initialize(init_state)
-    qubit = device.get_qubits(0)
+    qubit = device.get_qubit(0)
 
     Hadamard(qubit)
 
@@ -414,8 +447,8 @@ def test_bell_state_partial_trace():
     #  this is the thing we partial-trace on:  trace out Bob / qubit1
     alice_state = state.partial_trace(keep_qubits=[0])
 
-    ket0 = StateVector.ZERO
-    ket1 = StateVector.ONE
+    ket0 = ZERO
+    ket1 = ONE
 
     expected = (ket0.to_density_matrix() + ket1.to_density_matrix())
     expected = expected.scale(0.5)
@@ -458,52 +491,46 @@ def test_partial_trace_100():
     reduced_state = state.partial_trace(keep_qubits=[0])
     reduced_state = reduced_state.to_array(as_numpy=True)
 
-    zero = StateVector.ZERO
-    expected_state = zero.to_density_matrix().to_array(as_numpy=True)
+    expected_state = ZERO.to_density_matrix().to_array(as_numpy=True)
     assert np.array_equal(expected_state, reduced_state)
 
     reduced_state = state.partial_trace(keep_qubits=[1, 2])
     reduced_state = reduced_state.to_array(True)
-    expected_state = zero.tensor(zero)
+    expected_state = ZERO.tensor(ZERO)
     expected_state = expected_state.to_density_matrix().to_array(as_numpy=True)
     assert np.array_equal(expected_state, reduced_state)
 
 
 def test_partial_trace_010():
 
-    one = StateVector.ONE
-    zero = StateVector.ZERO
-    ket = zero.tensor(one).tensor(zero)
+    ket = ZERO.tensor(ONE).tensor(ZERO)
 
     state = ket.to_density_matrix()
     reduced_state = state.partial_trace(keep_qubits=[1])
     reduced_state = reduced_state.to_array(as_numpy=True)
 
-    expected_state = one.to_density_matrix().to_array(as_numpy=True)
+    expected_state = ONE.to_density_matrix().to_array(as_numpy=True)
     assert np.array_equal(expected_state, reduced_state)
 
     reduced_state = state.partial_trace(keep_qubits=[0, 2])
     reduced_state = reduced_state.to_array(True)
-    expected_state = zero.tensor(zero)
+    expected_state = ZERO.tensor(ZERO)
     expected_state = expected_state.to_density_matrix().to_array(as_numpy=True)
     assert np.array_equal(expected_state, reduced_state)
 
 
 def test_partial_trace_01010():
 
-    zero = StateVector.ZERO
-    one = StateVector.ONE
-
-    ket = zero.tensor(one)
-    ket = ket.tensor(zero)
-    ket = ket.tensor(one)
-    ket = ket.tensor(zero)
+    ket = ZERO.tensor(ONE)
+    ket = ket.tensor(ZERO)
+    ket = ket.tensor(ONE)
+    ket = ket.tensor(ZERO)
 
     state = ket.to_density_matrix()
     reduced_state = state.partial_trace(keep_qubits=[3, 1])
     reduced_state = reduced_state.to_array(as_numpy=True)
 
-    expected_state = one.tensor(one)
+    expected_state = ONE.tensor(ONE)
     expected_state = expected_state.to_density_matrix()
     expected_state = expected_state.to_array(as_numpy=True)
 

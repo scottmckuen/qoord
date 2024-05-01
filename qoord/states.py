@@ -175,14 +175,15 @@ class StateVector(object):
         return StateVector(new_inner)
 
 
-StateVector.ZERO = StateVector([1, 0])  # the zero ket |0> gives the 0 bit-value
-StateVector.ONE = StateVector([0, 1])  # the one ket |0> gives the 1 bit-value
+ZERO = StateVector([1, 0])  # the zero ket |0> gives the 0 bit-value
+ONE = StateVector([0, 1])  # the one ket |0> gives the 1 bit-value
 
 
 def close_enough(s1: StateVector, s2: StateVector, rel_tol=1e-15):
     a1 = s1.to_numpy_array()
     a2 = s2.to_numpy_array()
     return support_close(a1, a2, rel_tol)
+
 
 class MatrixOperator(object):
     @classmethod
@@ -335,6 +336,7 @@ class MatrixOperator(object):
 
     def get_eigenvector(self, eigenvalue):
         values, vectors = self.eig()
+        values = values.tolist()
         idx = values.index(eigenvalue)
         return vectors[idx]
 
@@ -707,7 +709,7 @@ class QuantumState(object):
 
             # some things we have to do manually
             inv_perm = invert_permutation(perm)
-            vector = evector.rearrange(inv_perm)  # return the eigenvector to the original arrangement
+            evector = evector.rearrange(inv_perm)  # return the eigenvector to the original arrangement
 
         """        
         # reduce the measurement result to the user-visible qubits
